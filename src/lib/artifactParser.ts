@@ -53,17 +53,23 @@ const isDataUrl = (content: string): boolean => {
 
 // Extract code blocks from markdown content
 const extractCodeBlocks = (content: string): { blocks: Artifact[]; remaining: string } => {
-  // Match code blocks with optional newline after language identifier
-  const codeBlockRegex = /```(\w+)?[\s]*\n?([\s\S]*?)```/g;
+  // Match code blocks with proper markdown format: ```language\ncode```
+  // This regex handles:
+  // - Optional language identifier (letters, numbers, plus for c++)
+  // - Optional whitespace after language
+  // - Code content (captured exactly as-is)
+  // - Closing triple backticks
+  const codeBlockRegex = /```([a-zA-Z0-9+#-]*)?[\t ]*\n?([\s\S]*?)```/g;
   const blocks: Artifact[] = [];
   let remaining = content;
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
     const language = match[1] ? normalizeLanguage(match[1]) : 'plaintext';
-    // Preserve the code content but trim only leading/trailing empty lines
+    // Preserve the code content exactly - only trim leading/trailing newlines
     const rawCode = match[2];
-    const code = rawCode.replace(/^\n+|\n+$/g, '');
+    // Don't over-process: just remove leading/trailing blank lines, preserve everything else
+    const code = rawCode.replace(/^\n+/, '').replace(/\n+$/, '');
     
     // Skip empty code blocks
     if (!code) continue;

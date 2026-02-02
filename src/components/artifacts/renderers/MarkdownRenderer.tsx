@@ -4,15 +4,11 @@ interface MarkdownRendererProps {
   content: string;
 }
 
-// Simple markdown to HTML converter
+// Simple markdown to HTML converter for text-only content (code blocks are handled separately)
 const parseMarkdown = (text: string): string => {
+  // Don't escape HTML - the artifact parser already extracts code blocks
+  // and we only receive plain text segments here
   let html = text;
-
-  // Escape HTML
-  html = html
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;");
 
   // Headers
   html = html.replace(/^### (.*$)/gm, '<h3 class="text-base font-semibold mt-5 mb-2 text-foreground">$1</h3>');
