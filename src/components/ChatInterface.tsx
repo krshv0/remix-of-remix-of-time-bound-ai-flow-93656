@@ -265,28 +265,24 @@ export const ChatInterface = ({ session, onTokenUpdate }: ChatInterfaceProps) =>
   };
 
   return (
-    <Card className="border-0 shadow-none bg-transparent">
-      <CardHeader className="px-0 pt-0 pb-4">
+    <Card className="border shadow-none">
+      <CardHeader className="space-y-1">
         <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2.5 text-base font-medium tracking-tight">
-            <Sparkles className="w-4 h-4 text-muted-foreground" />
-            <span className="text-foreground/90">
-              {session.model_name.replace(/google\/|gemini-|-/g, ' ').trim()}
-            </span>
+          <CardTitle className="flex items-center gap-2 text-lg font-light">
+            <Sparkles className="w-4 h-4" />
+            Chat with {session.model_name.replace(/google\/|gemini-|-/g, ' ')}
           </CardTitle>
           <MessageNavigator 
             messages={messages} 
             onMessageClick={scrollToMessage} 
           />
         </div>
-        <p className="text-xs text-muted-foreground/70 mt-1">
-          Session auto-saved • View history anytime
+        <p className="text-xs text-muted-foreground">
+          💾 This entire chat session is automatically saved. View all your sessions in Chat History.
         </p>
       </CardHeader>
-
-      <CardContent className="p-0 space-y-5">
-        {/* Messages container */}
-        <div className="h-[520px] overflow-y-auto space-y-6 px-1 py-2 scrollbar-thin">
+      <CardContent className="space-y-4">
+        <div className="h-[500px] overflow-y-auto space-y-3 p-4 rounded border border-border">
           {messages.reduce((acc: JSX.Element[], message, index) => {
             // Group user message with following AI response
             if (message.role === "user") {
@@ -295,17 +291,17 @@ export const ChatInterface = ({ session, onTokenUpdate }: ChatInterfaceProps) =>
                 <div
                   key={index}
                   ref={(el) => setMessageRef(index, el)}
-                  className="space-y-4 transition-all duration-200"
+                  className="space-y-2 transition-all duration-300"
                 >
                   {/* User message */}
                   <div className="flex justify-end">
-                    <div className="max-w-[85%] rounded-2xl px-4 py-3 bg-foreground text-background">
-                      <p className="text-[15px] leading-relaxed whitespace-pre-wrap">{message.content}</p>
+                    <div className="max-w-[80%] rounded px-4 py-3 bg-foreground text-background">
+                      <p className="text-sm whitespace-pre-wrap leading-relaxed">{message.content}</p>
                       {message.files && message.files.length > 0 && (
-                        <div className="mt-2.5 pt-2 border-t border-current/15">
-                          <p className="text-xs opacity-60 mb-1">Attachments</p>
+                        <div className="mt-2 pt-2 border-t border-current/20">
+                          <p className="text-xs opacity-70 mb-1">Attachments:</p>
                           {message.files.map((file, idx) => (
-                            <p key={idx} className="text-xs opacity-70">
+                            <p key={idx} className="text-xs opacity-80">
                               📎 {file.name} ({Math.round(file.size / 1024)}KB)
                             </p>
                           ))}
@@ -313,10 +309,10 @@ export const ChatInterface = ({ session, onTokenUpdate }: ChatInterfaceProps) =>
                       )}
                     </div>
                   </div>
-                  {/* AI response */}
+                  {/* AI response (if exists) */}
                   {aiResponse && aiResponse.role === "assistant" && (
                     <div className="flex justify-start">
-                      <div className="max-w-[90%] text-foreground">
+                      <div className="max-w-[85%] rounded px-4 py-3 bg-secondary text-foreground border border-border">
                         <MessageWithArtifacts content={aiResponse.content} />
                       </div>
                     </div>
@@ -329,9 +325,9 @@ export const ChatInterface = ({ session, onTokenUpdate }: ChatInterfaceProps) =>
                 <div
                   key={index}
                   ref={(el) => setMessageRef(index, el)}
-                  className="flex justify-start transition-all duration-200"
+                  className="flex justify-start transition-all duration-300"
                 >
-                  <div className="max-w-[90%] text-foreground">
+                  <div className="max-w-[85%] rounded px-4 py-3 bg-secondary text-foreground border border-border">
                     <MessageWithArtifacts content={message.content} />
                   </div>
                 </div>
@@ -340,47 +336,47 @@ export const ChatInterface = ({ session, onTokenUpdate }: ChatInterfaceProps) =>
             return acc;
           }, [])}
           {isTyping && (
-            <div className="flex justify-start py-2">
-              <div className="flex gap-1.5 px-4 py-3">
-                <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" />
-                <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0.15s' }} />
-                <div className="w-2 h-2 rounded-full bg-muted-foreground/50 animate-bounce" style={{ animationDelay: '0.3s' }} />
+            <div className="flex justify-start">
+              <div className="bg-secondary border border-border rounded px-4 py-3">
+                <div className="flex gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-bounce" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-bounce" style={{ animationDelay: '0.1s' }} />
+                  <div className="w-1.5 h-1.5 rounded-full bg-foreground animate-bounce" style={{ animationDelay: '0.2s' }} />
+                </div>
               </div>
             </div>
           )}
           <div ref={messagesEndRef} />
         </div>
 
-        {/* Input area */}
-        <div className="space-y-3">
+        <div className="space-y-2">
           <FileAttachment 
             key={fileAttachmentKey}
             onFilesChange={setAttachedFiles}
             disabled={isTyping}
           />
-          <div className="flex gap-3 items-end">
+          <div className="flex gap-2">
             <Textarea
-              placeholder="Message..."
+              placeholder="Type your message..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyPress={handleKeyPress}
-              className="min-h-[52px] max-h-[200px] resize-none rounded-xl bg-secondary/50 border-0 px-4 py-3.5 text-[15px] placeholder:text-muted-foreground/50 focus-visible:ring-1 focus-visible:ring-border focus-visible:ring-offset-0"
+              className="min-h-[60px] max-h-[120px] resize-none"
               disabled={isTyping}
-              rows={1}
             />
             <Button
               onClick={handleSend}
               disabled={!input.trim() || isTyping}
               size="icon"
-              className="h-[52px] w-[52px] shrink-0 rounded-xl"
+              className="h-[60px] w-[60px] shrink-0"
             >
               <Send className="w-4 h-4" />
             </Button>
           </div>
         </div>
 
-        <p className="text-[11px] text-muted-foreground/50 text-center pt-1">
-          {session.model_name.replace(/google\//g, '')}
+        <p className="text-xs text-muted-foreground text-center">
+          Powered by {session.model_name.replace(/google\//g, '')}
         </p>
       </CardContent>
     </Card>
