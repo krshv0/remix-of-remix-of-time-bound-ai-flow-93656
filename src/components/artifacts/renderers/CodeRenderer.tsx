@@ -116,19 +116,19 @@ const tokenize = (code: string, language?: string): Token[] => {
 const getTokenClass = (type: TokenType): string => {
   switch (type) {
     case "comment":
-      return "text-muted-foreground/60 italic";
+      return "text-[hsl(var(--syntax-comment))] italic";
     case "string":
-      return "text-emerald-400";
+      return "text-[hsl(var(--syntax-string))]";
     case "number":
-      return "text-amber-400";
+      return "text-[hsl(var(--syntax-number))]";
     case "keyword":
-      return "text-violet-400 font-medium";
+      return "text-[hsl(var(--syntax-keyword))] font-medium";
     case "function":
-      return "text-blue-400";
+      return "text-[hsl(var(--syntax-function))]";
     case "type":
-      return "text-cyan-400";
+      return "text-[hsl(var(--syntax-type))]";
     case "property":
-      return "text-sky-400";
+      return "text-[hsl(var(--syntax-property))]";
     case "operator":
       return "text-foreground/70";
     case "punctuation":
@@ -143,30 +143,36 @@ const CodeRenderer = ({ code, language, isExpanded }: CodeRendererProps) => {
   const lines = code.split("\n");
 
   return (
-    <div className="relative font-mono text-[13px] leading-relaxed bg-card/50">
-      <div className="flex">
-        {/* Line numbers */}
+    <div className="relative bg-secondary/30 overflow-hidden">
+      <div className="flex min-w-0">
+        {/* Line numbers - fixed position */}
         <div 
-          className="select-none shrink-0 py-4 pr-4 text-right text-muted-foreground/40 border-r border-border/50"
-          style={{ minWidth: `${Math.max(2, String(lines.length).length) * 0.75 + 1.5}rem`, paddingLeft: '1rem' }}
+          className="select-none shrink-0 py-4 text-right text-muted-foreground/40 border-r border-border/40 bg-secondary/50"
+          style={{ 
+            minWidth: `${Math.max(2, String(lines.length).length) * 0.6 + 1.25}rem`,
+            paddingLeft: '0.75rem',
+            paddingRight: '0.75rem'
+          }}
         >
           {lines.map((_, i) => (
-            <div key={i} className="leading-[1.7]">
+            <div key={i} className="font-mono text-[12px] leading-[1.65] h-[1.65em]">
               {i + 1}
             </div>
           ))}
         </div>
 
-        {/* Code content */}
-        <pre className="flex-1 py-4 px-4 overflow-x-auto">
-          <code className="leading-[1.7]">
-            {tokens.map((token, i) => (
-              <span key={i} className={getTokenClass(token.type)}>
-                {token.content}
-              </span>
-            ))}
-          </code>
-        </pre>
+        {/* Code content - horizontal scroll */}
+        <div className="flex-1 overflow-x-auto min-w-0">
+          <pre className="py-4 px-4 m-0 bg-transparent">
+            <code className="font-mono text-[13px] leading-[1.65] block whitespace-pre">
+              {tokens.map((token, i) => (
+                <span key={i} className={getTokenClass(token.type)}>
+                  {token.content}
+                </span>
+              ))}
+            </code>
+          </pre>
+        </div>
       </div>
     </div>
   );

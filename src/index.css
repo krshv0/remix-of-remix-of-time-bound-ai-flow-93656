@@ -42,6 +42,19 @@ All colors MUST be HSL.
 
     --radius: 0.625rem;
     
+    /* Semantic colors */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    /* Syntax highlighting */
+    --syntax-comment: 0 0% 55%;
+    --syntax-string: 142 60% 55%;
+    --syntax-number: 38 92% 60%;
+    --syntax-keyword: 260 80% 70%;
+    --syntax-function: 210 80% 65%;
+    --syntax-type: 185 75% 55%;
+    --syntax-property: 200 80% 60%;
+    
     --shadow-card: 0 1px 3px hsl(0 0% 0% / 0.5);
     --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
@@ -83,6 +96,19 @@ All colors MUST be HSL.
     --border: 0 0% 20%;
     --input: 0 0% 20%;
     --ring: 0 0% 100%;
+    
+    /* Semantic colors */
+    --success: 142 76% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    /* Syntax highlighting */
+    --syntax-comment: 0 0% 55%;
+    --syntax-string: 142 60% 55%;
+    --syntax-number: 38 92% 60%;
+    --syntax-keyword: 260 80% 70%;
+    --syntax-function: 210 80% 65%;
+    --syntax-type: 185 75% 55%;
+    --syntax-property: 200 80% 60%;
     
     --shadow-card: 0 1px 3px hsl(0 0% 100% / 0.1);
     
@@ -135,5 +161,24 @@ All colors MUST be HSL.
   
   .animation-delay-700 {
     animation-delay: 700ms;
+  }
+
+  /* Custom scrollbar for code blocks */
+  .scrollbar-thin::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted));
+    border-radius: 3px;
+  }
+  
+  .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.3);
   }
 }

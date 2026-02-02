@@ -168,7 +168,7 @@ export const ArtifactContainer = ({
               onClick={handleCopy}
             >
               {copied ? (
-                <Check className="w-3.5 h-3.5 text-emerald-500" />
+                <Check className="w-3.5 h-3.5 text-[hsl(var(--success))]" />
               ) : (
                 <Copy className="w-3.5 h-3.5" />
               )}
@@ -219,8 +219,8 @@ export const ArtifactContainer = ({
       {/* Content */}
       <div
         className={cn(
-          "overflow-auto",
-          isFullscreen ? "flex-1" : canExpand && !isExpanded ? "max-h-[200px]" : "max-h-[400px]"
+          "overflow-hidden",
+          isFullscreen ? "flex-1 overflow-auto" : canExpand && !isExpanded ? "max-h-[240px] overflow-hidden" : "max-h-[500px] overflow-auto"
         )}
       >
         {renderContent()}
