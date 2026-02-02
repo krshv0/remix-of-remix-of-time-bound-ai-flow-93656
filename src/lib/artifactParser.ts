@@ -53,14 +53,17 @@ const isDataUrl = (content: string): boolean => {
 
 // Extract code blocks from markdown content
 const extractCodeBlocks = (content: string): { blocks: Artifact[]; remaining: string } => {
-  const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
+  // Match code blocks with optional newline after language identifier
+  const codeBlockRegex = /```(\w+)?[\s]*\n?([\s\S]*?)```/g;
   const blocks: Artifact[] = [];
   let remaining = content;
   let match;
 
   while ((match = codeBlockRegex.exec(content)) !== null) {
     const language = match[1] ? normalizeLanguage(match[1]) : 'plaintext';
-    const code = match[2].trim();
+    // Preserve the code content but trim only leading/trailing empty lines
+    const rawCode = match[2];
+    const code = rawCode.replace(/^\n+|\n+$/g, '');
     
     // Skip empty code blocks
     if (!code) continue;
