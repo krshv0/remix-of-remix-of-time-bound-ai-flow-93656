@@ -9,20 +9,21 @@ interface MessageWithArtifactsProps {
   className?: string;
 }
 
-// Simple markdown rendering for text segments
+// Simple markdown rendering for text segments - NO HTML escaping
+// Code blocks are already extracted by artifactParser, so we only handle plain text here
 const renderTextWithMarkdown = (text: string): JSX.Element => {
-  // Process basic markdown inline
+  // Process basic markdown inline - preserve original text, no escaping
   let processed = text;
 
   // Bold
   processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold">$1</strong>');
   processed = processed.replace(/__(.*?)__/g, '<strong class="font-semibold">$1</strong>');
 
-  // Italic
+  // Italic (avoid matching markdown formatting characters)
   processed = processed.replace(/(?<!\*)\*(?!\*)([^*]+)(?<!\*)\*(?!\*)/g, '<em class="italic">$1</em>');
   processed = processed.replace(/(?<!_)_(?!_)([^_]+)(?<!_)_(?!_)/g, '<em class="italic">$1</em>');
 
-  // Inline code
+  // Inline code - preserve content exactly as-is
   processed = processed.replace(
     /`([^`]+)`/g,
     '<code class="px-1.5 py-0.5 bg-secondary rounded text-[13px] font-mono text-foreground/90">$1</code>'
