@@ -141,20 +141,20 @@ export const ArtifactContainer = ({
   return (
     <Card
       className={cn(
-        "overflow-hidden transition-all duration-200",
+        "overflow-hidden transition-all duration-200 border-border/50 bg-card/80",
         isFullscreen && "fixed inset-4 z-50 flex flex-col"
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-3 py-2 border-b border-border bg-muted/50">
-        <div className="flex items-center gap-2 min-w-0">
-          <Icon className="w-4 h-4 text-muted-foreground shrink-0" />
-          <span className="text-xs font-medium text-muted-foreground truncate">
+      <div className="flex items-center justify-between px-4 py-2.5 border-b border-border/50 bg-muted/30">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <Icon className="w-4 h-4 text-muted-foreground/70 shrink-0" />
+          <span className="text-xs font-medium text-foreground/80 truncate">
             {artifact.title || artifact.filename || artifact.type}
           </span>
           {artifact.language && (
-            <span className="text-xs text-muted-foreground/60 hidden sm:inline">
-              • {artifact.language}
+            <span className="text-xs text-muted-foreground/50 hidden sm:inline font-mono">
+              {artifact.language}
             </span>
           )}
         </div>
@@ -168,7 +168,7 @@ export const ArtifactContainer = ({
               onClick={handleCopy}
             >
               {copied ? (
-                <Check className="w-3.5 h-3.5 text-green-500" />
+                <Check className="w-3.5 h-3.5 text-emerald-500" />
               ) : (
                 <Copy className="w-3.5 h-3.5" />
               )}
