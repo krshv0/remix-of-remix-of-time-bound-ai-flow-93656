@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Plus } from "lucide-react";
+import { LogOut, Sparkles, Plus, Moon, Sun } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -15,7 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Session, User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
 import { SessionTimer } from "@/components/SessionTimer";
-import { ChatInterface } from "@/components/ChatInterface";
+import { ModernChatInterface, useTheme } from "@/components/chat-ui";
 import {
   Dialog,
   DialogContent,
@@ -29,6 +29,7 @@ export default function Dashboard() {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { resolvedTheme, toggleTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [activeSession, setActiveSession] = useState<any>(null);
@@ -154,118 +155,145 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background">
-        <div className="container flex h-14 items-center justify-between px-4 mx-auto">
+    <div className="h-screen flex flex-col bg-background overflow-hidden">
+      {/* Minimal Header */}
+      <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
+        <div className="flex h-14 items-center justify-between px-4 max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3" onClick={() => navigate('/home')} style={{ cursor: 'pointer' }}>
-              <div className="w-7 h-7 rounded-full border border-foreground flex items-center justify-center">
-                <Sparkles className="w-4 h-4" />
+            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/home')}>
+              <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
+                <Sparkles className="w-4 h-4 text-white" />
               </div>
-              <span className="text-lg font-light tracking-tight">AI Access Hub</span>
+              <span className="text-lg font-medium tracking-tight hidden sm:inline">AI Access Hub</span>
             </div>
-            <nav className="hidden md:flex items-center gap-4">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/home')} className="h-8 px-3">
+            <nav className="hidden md:flex items-center gap-1">
+              <Button variant="ghost" size="sm" onClick={() => navigate('/home')} className="h-8 px-3 text-muted-foreground hover:text-foreground">
                 Home
               </Button>
-              <Button variant="ghost" size="sm" className="h-8 px-3 bg-secondary">
+              <Button variant="ghost" size="sm" className="h-8 px-3 bg-primary/10 text-foreground">
                 Dashboard
               </Button>
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => navigate('/chat-history')} 
-                className="h-8 px-3 hover:bg-primary/10 transition-colors"
+                className="h-8 px-3 text-muted-foreground hover:text-foreground"
               >
-                💬 Chat History
+                History
               </Button>
             </nav>
           </div>
           
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
             {allActiveSessions.length > 1 && activeSession && (
               <Select value={activeSession.id} onValueChange={handleSessionSwitch}>
-                <SelectTrigger className="w-[200px] h-8 text-xs">
+                <SelectTrigger className="w-[180px] h-8 text-xs">
                   <SelectValue placeholder="Select session" />
                 </SelectTrigger>
                 <SelectContent>
                   {allActiveSessions.map((sess) => (
                     <SelectItem key={sess.id} value={sess.id}>
-                      {sess.plan_id} - {sess.model_name}
+                      {sess.plan_id} - {sess.model_name.replace(/google\//g, '')}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             )}
-            <span className="text-xs text-muted-foreground hidden sm:inline">{user?.email}</span>
+            
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleTheme}
+              className="h-8 w-8"
+            >
+              {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+            </Button>
+            
+            <span className="text-xs text-muted-foreground hidden lg:inline px-2 py-1 bg-muted rounded-md">
+              {user?.email}
+            </span>
             <Button variant="ghost" size="sm" onClick={handleSignOut} className="h-8 px-3">
-              <LogOut className="w-3 h-3 mr-2" />
-              Sign Out
+              <LogOut className="w-4 h-4" />
+              <span className="ml-2 hidden sm:inline">Sign Out</span>
             </Button>
           </div>
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8 space-y-6 max-w-5xl">
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-hidden">
         {activeSession ? (
           <>
-            <div className="flex items-center justify-between">
-              <SessionTimer 
-                session={activeSession} 
-                onExpire={loadActiveSession}
-                tokensUsed={tokenStats?.used}
-                tokenLimit={tokenStats?.limit}
-              />
-              <Dialog open={showPlanSelector} onOpenChange={setShowPlanSelector}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Buy Another Session
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle className="text-xl font-light">Purchase Additional Session</DialogTitle>
-                    <DialogDescription className="text-sm">
-                      Your current session will remain active. Select a plan for your next session.
-                    </DialogDescription>
-                  </DialogHeader>
-                  <div className="mt-4">
-                    <PlanSelector 
-                      onSessionStart={() => {
-                        loadActiveSession();
-                        loadAllActiveSessions();
-                        setShowPlanSelector(false);
-                        toast({
-                          title: "Session Queued",
-                          description: "Your new session will be available when the current one expires.",
-                        });
-                      }} 
-                    />
-                  </div>
-                </DialogContent>
-              </Dialog>
+            {/* Session Info Bar */}
+            <div className="border-b bg-muted/30 px-4 py-2">
+              <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
+                <SessionTimer 
+                  session={activeSession} 
+                  onExpire={loadActiveSession}
+                  tokensUsed={tokenStats?.used}
+                  tokenLimit={tokenStats?.limit}
+                />
+                <Dialog open={showPlanSelector} onOpenChange={setShowPlanSelector}>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" size="sm" className="h-8">
+                      <Plus className="w-4 h-4 mr-2" />
+                      <span className="hidden sm:inline">New Session</span>
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle className="text-xl font-semibold">Purchase Additional Session</DialogTitle>
+                      <DialogDescription className="text-sm text-muted-foreground">
+                        Your current session will remain active. Select a plan for your next session.
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="mt-4">
+                      <PlanSelector 
+                        onSessionStart={() => {
+                          loadActiveSession();
+                          loadAllActiveSessions();
+                          setShowPlanSelector(false);
+                          toast({
+                            title: "Session Queued",
+                            description: "Your new session will be available when the current one expires.",
+                          });
+                        }} 
+                      />
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </div>
-            <ChatInterface 
-              session={activeSession}
-              onTokenUpdate={(used, limit) => setTokenStats({ used, limit })}
-            />
+            
+            {/* Chat Interface */}
+            <div className="flex-1 overflow-hidden">
+              <ModernChatInterface 
+                session={activeSession}
+                onTokenUpdate={(used, limit) => setTokenStats({ used, limit })}
+                className="h-full"
+              />
+            </div>
           </>
         ) : (
-          <Card className="border shadow-none">
-            <CardHeader className="space-y-1">
-              <CardTitle className="text-xl font-light">Choose Your Plan</CardTitle>
-              <CardDescription className="text-sm">
-                Select a plan to start your AI session
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <PlanSelector onSessionStart={() => {
-                loadActiveSession();
-                loadAllActiveSessions();
-              }} />
-            </CardContent>
-          </Card>
+          <div className="flex-1 flex items-center justify-center p-4">
+            <Card className="border shadow-lg max-w-4xl w-full">
+              <CardHeader className="space-y-1 text-center pb-4">
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <Sparkles className="w-8 h-8 text-white" />
+                </div>
+                <CardTitle className="text-2xl font-semibold">Choose Your Plan</CardTitle>
+                <CardDescription className="text-base text-muted-foreground">
+                  Select a plan to start your AI session
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <PlanSelector onSessionStart={() => {
+                  loadActiveSession();
+                  loadAllActiveSessions();
+                }} />
+              </CardContent>
+            </Card>
+          </div>
         )}
       </div>
     </div>

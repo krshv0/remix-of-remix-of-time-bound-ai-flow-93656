@@ -2,94 +2,152 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* 
+  Modern Chat UI Design System
+  Benchmarked against Claude, Gemini, and ChatGPT
+  Uses 8px base grid system
 */
 
 @layer base {
   :root {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* Light Mode - Clean, minimal aesthetic */
+    --background: 0 0% 100%;
+    --foreground: 240 10% 6%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 6%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 6%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 240 5% 16%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 5% 96%;
+    --secondary-foreground: 240 6% 10%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 240 5% 96%;
+    --muted-foreground: 240 4% 46%;
 
-    --accent: 0 0% 90%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 240 5% 96%;
+    --accent-foreground: 240 6% 10%;
 
-    --destructive: 0 0% 100%;
-    --destructive-foreground: 0 0% 0%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --success: 142 76% 36%;
+    --success-foreground: 0 0% 98%;
 
-    --radius: 0.5rem;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --border: 240 6% 90%;
+    --input: 240 6% 90%;
+    --ring: 240 5% 65%;
+
+    --radius: 0.75rem;
     
-    --shadow-card: 0 4px 20px hsl(0 0% 100% / 0.1);
-    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    /* Chat-specific tokens */
+    --chat-user-bg: 240 5% 96%;
+    --chat-user-fg: 240 10% 6%;
+    --chat-assistant-bg: 0 0% 100%;
+    --chat-assistant-fg: 240 10% 6%;
+    --chat-input-bg: 0 0% 100%;
+    --chat-surface: 240 5% 98%;
+    
+    /* Code block tokens */
+    --code-bg: 240 5% 96%;
+    --code-border: 240 6% 90%;
+    --code-header: 240 5% 92%;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.07), 0 2px 4px -2px rgb(0 0 0 / 0.07);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.08);
+    --shadow-input: 0 0 0 1px hsl(var(--border)), 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow-input-focus: 0 0 0 2px hsl(var(--ring) / 0.2), 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    
+    /* Transitions */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-smooth: 200ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: 300ms cubic-bezier(0.34, 1.56, 0.64, 1);
 
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 0% 100%;
+    /* Sidebar */
+    --sidebar-background: 240 5% 98%;
+    --sidebar-foreground: 240 10% 6%;
+    --sidebar-primary: 240 5% 16%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 5% 92%;
+    --sidebar-accent-foreground: 240 6% 10%;
+    --sidebar-border: 240 6% 90%;
+    --sidebar-ring: 240 5% 65%;
   }
 
   .dark {
-    --background: 0 0% 0%;
-    --foreground: 0 0% 100%;
+    /* Dark Mode - Sophisticated, easy on eyes */
+    --background: 240 6% 10%;
+    --foreground: 0 0% 95%;
 
-    --card: 0 0% 5%;
-    --card-foreground: 0 0% 100%;
+    --card: 240 6% 12%;
+    --card-foreground: 0 0% 95%;
 
-    --popover: 0 0% 5%;
-    --popover-foreground: 0 0% 100%;
+    --popover: 240 6% 12%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 0 0% 100%;
-    --primary-foreground: 0 0% 0%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 6% 10%;
 
-    --secondary: 0 0% 10%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 240 5% 18%;
+    --secondary-foreground: 0 0% 95%;
 
-    --muted: 0 0% 10%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 240 5% 18%;
+    --muted-foreground: 240 5% 55%;
 
-    --accent: 0 0% 90%;
-    --accent-foreground: 0 0% 0%;
+    --accent: 240 5% 20%;
+    --accent-foreground: 0 0% 95%;
 
-    --destructive: 0 0% 100%;
-    --destructive-foreground: 0 0% 0%;
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 0 0% 20%;
-    --input: 0 0% 20%;
-    --ring: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 98%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 98%;
+
+    --border: 240 5% 20%;
+    --input: 240 5% 20%;
+    --ring: 240 5% 50%;
     
-    --shadow-card: 0 1px 3px hsl(0 0% 100% / 0.1);
+    /* Chat-specific tokens - Dark */
+    --chat-user-bg: 240 5% 22%;
+    --chat-user-fg: 0 0% 95%;
+    --chat-assistant-bg: 240 6% 12%;
+    --chat-assistant-fg: 0 0% 95%;
+    --chat-input-bg: 240 6% 14%;
+    --chat-surface: 240 6% 11%;
     
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 100%;
-    --sidebar-primary: 0 0% 100%;
-    --sidebar-primary-foreground: 0 0% 0%;
-    --sidebar-accent: 0 0% 10%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 0 0% 20%;
-    --sidebar-ring: 0 0% 100%;
+    /* Code block tokens - Dark */
+    --code-bg: 240 6% 8%;
+    --code-border: 240 5% 18%;
+    --code-header: 240 5% 14%;
+    
+    /* Shadows - Dark */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.5), 0 4px 6px -4px rgb(0 0 0 / 0.4);
+    --shadow-input: 0 0 0 1px hsl(var(--border)), 0 1px 2px 0 rgb(0 0 0 / 0.2);
+    --shadow-input-focus: 0 0 0 2px hsl(var(--ring) / 0.3), 0 1px 2px 0 rgb(0 0 0 / 0.2);
+
+    /* Sidebar - Dark */
+    --sidebar-background: 240 6% 8%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 0 0% 98%;
+    --sidebar-primary-foreground: 240 6% 10%;
+    --sidebar-accent: 240 5% 16%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 240 5% 18%;
+    --sidebar-ring: 240 5% 50%;
   }
 }
 
@@ -98,25 +156,323 @@ All colors MUST be HSL.
     @apply border-border;
   }
 
+  html {
+    @apply scroll-smooth antialiased;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
     @apply bg-background text-foreground;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-border rounded-full;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/30;
+  }
+
+  /* Firefox scrollbar */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--border)) transparent;
+  }
+}
+
+@layer components {
+  /* Chat message animations */
+  .message-enter {
+    animation: messageEnter 0.3s ease-out forwards;
+  }
+
+  @keyframes messageEnter {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Typing indicator animation */
+  .typing-dot {
+    animation: typingBounce 1.4s ease-in-out infinite both;
+  }
+
+  .typing-dot:nth-child(1) { animation-delay: 0s; }
+  .typing-dot:nth-child(2) { animation-delay: 0.16s; }
+  .typing-dot:nth-child(3) { animation-delay: 0.32s; }
+
+  @keyframes typingBounce {
+    0%, 80%, 100% {
+      transform: scale(0.8);
+      opacity: 0.5;
+    }
+    40% {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+
+  /* Streaming text animation */
+  .streaming-cursor::after {
+    content: '▋';
+    animation: cursorBlink 1s step-end infinite;
+    @apply text-primary ml-0.5;
+  }
+
+  @keyframes cursorBlink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  /* Smooth fade for scroll-to-bottom button */
+  .scroll-button-enter {
+    animation: fadeSlideUp 0.2s ease-out forwards;
+  }
+
+  .scroll-button-exit {
+    animation: fadeSlideDown 0.2s ease-out forwards;
+  }
+
+  @keyframes fadeSlideUp {
+    from {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeSlideDown {
+    from {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateY(8px);
+    }
+  }
+
+  /* Code block styling */
+  .code-block {
+    @apply rounded-lg overflow-hidden;
+    background: hsl(var(--code-bg));
+    border: 1px solid hsl(var(--code-border));
+  }
+
+  .code-block-header {
+    @apply flex items-center justify-between px-4 py-2 text-xs;
+    background: hsl(var(--code-header));
+    border-bottom: 1px solid hsl(var(--code-border));
+  }
+
+  /* Prose styling for markdown content */
+  .prose-chat {
+    @apply text-foreground leading-relaxed;
+  }
+
+  .prose-chat h1 { @apply text-2xl font-semibold mt-6 mb-4 first:mt-0; }
+  .prose-chat h2 { @apply text-xl font-semibold mt-5 mb-3 first:mt-0; }
+  .prose-chat h3 { @apply text-lg font-semibold mt-4 mb-2 first:mt-0; }
+  .prose-chat h4 { @apply text-base font-semibold mt-4 mb-2 first:mt-0; }
+
+  .prose-chat p { @apply my-3 first:mt-0 last:mb-0; }
+
+  .prose-chat ul {
+    @apply my-3 pl-6 list-disc space-y-1;
+  }
+
+  .prose-chat ol {
+    @apply my-3 pl-6 list-decimal space-y-1;
+  }
+
+  .prose-chat li { @apply pl-1; }
+  .prose-chat li > ul,
+  .prose-chat li > ol {
+    @apply my-1;
+  }
+
+  .prose-chat blockquote {
+    @apply my-4 pl-4 border-l-2 border-border italic text-muted-foreground;
+  }
+
+  .prose-chat hr {
+    @apply my-6 border-border;
+  }
+
+  .prose-chat a {
+    @apply text-primary underline underline-offset-2 hover:no-underline;
+  }
+
+  .prose-chat strong {
+    @apply font-semibold;
+  }
+
+  .prose-chat code:not(pre code) {
+    @apply px-1.5 py-0.5 rounded text-sm font-mono;
+    background: hsl(var(--code-bg));
+  }
+
+  .prose-chat pre {
+    @apply my-4 first:mt-0 last:mb-0;
+  }
+
+  .prose-chat table {
+    @apply w-full my-4 text-sm border-collapse;
+  }
+
+  .prose-chat th {
+    @apply px-4 py-2 text-left font-semibold border-b-2 border-border bg-muted/50;
+  }
+
+  .prose-chat td {
+    @apply px-4 py-2 border-b border-border;
+  }
+
+  .prose-chat tr:last-child td {
+    @apply border-b-0;
+  }
+
+  .prose-chat img {
+    @apply rounded-lg my-4 max-w-full;
+  }
+
+  /* Message Navigation Panel animations */
+  .nav-panel-backdrop {
+    animation: fadeIn 0.15s ease-out forwards;
+  }
+
+  .nav-panel-enter {
+    animation: navPanelEnter 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes navPanelEnter {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(-8px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
+
+  /* Mobile bottom sheet animation */
+  @media (max-width: 639px) {
+    .nav-panel-enter {
+      animation: navPanelEnterMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    
+    @keyframes navPanelEnterMobile {
+      from {
+        opacity: 0;
+        transform: translateY(100%);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Message block highlight animation (when jumping to a message) */
+  .message-block-highlight {
+    animation: highlightPulse 2s ease-out forwards;
+  }
+
+  @keyframes highlightPulse {
+    0% {
+      background-color: hsl(var(--warning) / 0.15);
+      box-shadow: inset 3px 0 0 hsl(var(--warning));
+    }
+    70% {
+      background-color: hsl(var(--warning) / 0.1);
+      box-shadow: inset 3px 0 0 hsl(var(--warning) / 0.7);
+    }
+    100% {
+      background-color: transparent;
+      box-shadow: inset 3px 0 0 transparent;
+    }
+  }
+
+  /* Alternative subtle border highlight */
+  .message-block-highlight-border {
+    animation: borderHighlight 2s ease-out forwards;
+  }
+
+  @keyframes borderHighlight {
+    0%, 30% {
+      border-left: 3px solid hsl(var(--warning));
+      padding-left: calc(1rem - 3px);
+    }
+    100% {
+      border-left: 3px solid transparent;
+      padding-left: calc(1rem - 3px);
+    }
   }
 }
 
 @layer utilities {
-  .animation-delay-200 {
-    animation-delay: 200ms;
-  }
+  /* Animation delays */
+  .animation-delay-100 { animation-delay: 100ms; }
+  .animation-delay-200 { animation-delay: 200ms; }
+  .animation-delay-300 { animation-delay: 300ms; }
+  .animation-delay-400 { animation-delay: 400ms; }
+  .animation-delay-500 { animation-delay: 500ms; }
   
-  .animation-delay-400 {
-    animation-delay: 400ms;
+  /* Glass effect */
+  .glass {
+    @apply bg-background/80 backdrop-blur-lg;
   }
-  
-  .animation-delay-600 {
-    animation-delay: 600ms;
+
+  /* Focus visible ring */
+  .focus-ring {
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background;
   }
-  
-  .animation-delay-700 {
-    animation-delay: 700ms;
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Smooth transition classes */
+  .transition-base {
+    transition: var(--transition-smooth);
+  }
+
+  .transition-fast {
+    transition: var(--transition-fast);
   }
 }
