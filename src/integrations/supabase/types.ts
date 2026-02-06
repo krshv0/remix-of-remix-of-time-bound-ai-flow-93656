@@ -84,10 +84,62 @@ export type Database = {
           },
         ]
       }
+      image_generations: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          id: string
+          image_url: string
+          model_used: string | null
+          prompt: string
+          resolution: string | null
+          session_id: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_url: string
+          model_used?: string | null
+          prompt: string
+          resolution?: string | null
+          session_id: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          id?: string
+          image_url?: string
+          model_used?: string | null
+          prompt?: string
+          resolution?: string | null
+          session_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "image_generations_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "image_generations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       session_config: {
         Row: {
           created_at: string
           id: string
+          image_credits_per_hour: number | null
           model_name: string
           plan_id: string
           token_limit_per_hour: number
@@ -96,6 +148,7 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          image_credits_per_hour?: number | null
           model_name: string
           plan_id: string
           token_limit_per_hour: number
@@ -104,6 +157,7 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          image_credits_per_hour?: number | null
           model_name?: string
           plan_id?: string
           token_limit_per_hour?: number
@@ -117,6 +171,7 @@ export type Database = {
           expires_at: string
           hours_purchased: number
           id: string
+          images_generated: number | null
           model_name: string
           plan_id: string
           price_paid: number
@@ -130,6 +185,7 @@ export type Database = {
           expires_at: string
           hours_purchased: number
           id?: string
+          images_generated?: number | null
           model_name: string
           plan_id: string
           price_paid: number
@@ -143,6 +199,7 @@ export type Database = {
           expires_at?: string
           hours_purchased?: number
           id?: string
+          images_generated?: number | null
           model_name?: string
           plan_id?: string
           price_paid?: number
