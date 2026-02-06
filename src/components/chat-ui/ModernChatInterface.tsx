@@ -24,10 +24,21 @@ import {
 import { ChatSidebar } from './components/ChatSidebar';
 import { Message, FileAttachment, Conversation } from './types';
 import { groupMessagesIntoBlocks } from './utils/messageBlocks';
+import { ImageGenerator } from '@/components/chat/ImageGenerator';
+import { Image as ImageIcon } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 interface ModernChatInterfaceProps {
   session: any;
+  conversationId?: string;
+  generationStats?: {
+    imagesUsed: number;
+    imagesLimit: number;
+    videosUsed: number;
+    videosLimit: number;
+  } | null;
   onTokenUpdate?: (tokensUsed: number, tokenLimit: number) => void;
+  onGenerationUpdate?: () => void;
   className?: string;
 }
 
@@ -44,7 +55,10 @@ const getResolvedTheme = () => {
 
 export function ModernChatInterface({
   session,
+  conversationId: initialConversationId,
+  generationStats,
   onTokenUpdate,
+  onGenerationUpdate,
   className,
 }: ModernChatInterfaceProps) {
   const { toast } = useToast();
@@ -57,6 +71,7 @@ export function ModernChatInterface({
   const [conversationId, setConversationId] = useState<string | null>(null);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [showImageGenerator, setShowImageGenerator] = useState(false);
 
   // Track theme for sidebar
   const [isDarkMode, setIsDarkMode] = useState(() => getResolvedTheme() === 'dark');
@@ -108,23 +123,42 @@ export function ModernChatInterface({
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
 
-        // Load existing conversation for this session
-        const { data: existing } = await (supabase as any)
-          .from('conversations')
-          .select('*')
-          .eq('session_id', session.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+        let conversationToLoad = null;
 
-        if (existing) {
-          setConversationId(existing.id);
+        // If a specific conversation ID was passed, load that conversation
+        if (initialConversationId) {
+          const { data: specificConv } = await (supabase as any)
+            .from('conversations')
+            .select('*')
+            .eq('id', initialConversationId)
+            .single();
+
+          if (specificConv) {
+            conversationToLoad = specificConv;
+          }
+        }
+
+        // Otherwise, load the most recent conversation for this session
+        if (!conversationToLoad) {
+          const { data: existing } = await (supabase as any)
+            .from('conversations')
+            .select('*')
+            .eq('session_id', session.id)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          conversationToLoad = existing;
+        }
+
+        if (conversationToLoad) {
+          setConversationId(conversationToLoad.id);
           
           // Load messages
           const { data: existingMessages } = await (supabase as any)
             .from('chat_messages')
             .select('*')
-            .eq('conversation_id', existing.id)
+            .eq('conversation_id', conversationToLoad.id)
             .order('created_at', { ascending: true });
 
           if (existingMessages?.length > 0) {
@@ -147,7 +181,7 @@ export function ModernChatInterface({
     };
 
     init();
-  }, [session.id]);
+  }, [session.id, initialConversationId]);
 
   // Load conversations for sidebar
   const loadConversations = async () => {
@@ -566,8 +600,37 @@ export function ModernChatInterface({
 
         {/* Input area */}
         <div className="border-t bg-background/80 backdrop-blur-lg">
-          <div className="max-w-3xl mx-auto p-4">
+          <div className="max-w-3xl mx-auto p-4 space-y-3">
+            {/* Image Generator */}
+            {showImageGenerator && generationStats && (
+              <ImageGenerator
+                sessionId={session.id}
+                conversationId={conversationId || undefined}
+                creditsRemaining={generationStats.imagesLimit - generationStats.imagesUsed}
+                onImageGenerated={() => {
+                  if (onGenerationUpdate) onGenerationUpdate();
+                }}
+                onClose={() => setShowImageGenerator(false)}
+              />
+            )}
+
             <div className="flex items-end gap-2">
+              {/* Image Generation Button */}
+              {generationStats && generationStats.imagesLimit > 0 && (
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setShowImageGenerator(!showImageGenerator)}
+                  title="Generate Image"
+                  className={cn(
+                    "h-10 w-10 shrink-0",
+                    showImageGenerator && "bg-primary/10 border-primary"
+                  )}
+                >
+                  <ImageIcon className="w-4 h-4" />
+                </Button>
+              )}
+
               {/* Navigation trigger - placed next to input */}
               {hasMessages && (
                 <NavigationTrigger

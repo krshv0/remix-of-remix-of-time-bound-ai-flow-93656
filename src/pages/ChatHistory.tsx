@@ -171,17 +171,39 @@ export default function ChatHistory() {
     await loadMessages(conversation.id);
   };
 
+  const handleResumeChat = (conversation: Conversation) => {
+    // Navigate to chat page with both session ID and conversation ID
+    navigate('/chat', { 
+      state: { 
+        sessionId: conversation.session_id,
+        conversationId: conversation.id 
+      } 
+    });
+  };
+
   const handleMessageSelect = async (conversationId: string, messageId: string) => {
     const conversation = conversations.find(c => c.id === conversationId);
     if (conversation) {
       await handleConversationClick(conversation);
       setHighlightedMessageId(messageId);
       
-      // Scroll to message after render
+      // Scroll to message after render with longer delay to ensure messages are loaded
       setTimeout(() => {
         const element = document.getElementById(`message-${messageId}`);
-        element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 100);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+          // If direct ID not found, try to find the message in a group
+          const allMessageElements = document.querySelectorAll('[id^="message-"]');
+          allMessageElements.forEach((el) => {
+            const groupElement = el as HTMLElement;
+            // Check if this group contains the highlighted message
+            if (groupElement.querySelector(`[data-message-id="${messageId}"]`)) {
+              groupElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+          });
+        }
+      }, 300);
     }
   };
 
@@ -329,6 +351,19 @@ export default function ChatHistory() {
                             <Button
                               variant="ghost"
                               size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleResumeChat(conversation);
+                              }}
+                              className="h-7 px-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                              title="Resume chat"
+                            >
+                              <MessageSquare className="w-3.5 h-3.5 mr-1" />
+                              <span className="text-xs">Resume</span>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
                               onClick={(e) => handleDelete(conversation.id, e)}
                               className="h-7 w-7 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
                             >
@@ -399,7 +434,7 @@ export default function ChatHistory() {
                             >
                               {/* User Message */}
                               {group.userMessage && !group.isStandaloneAI && (
-                                <div className="p-4 border-b">
+                                <div className="p-4 border-b" data-message-id={group.userMessage.id}>
                                   <div className="flex items-start gap-3">
                                     <div className="shrink-0 w-8 h-8 rounded-full bg-foreground flex items-center justify-center">
                                       <User className="h-4 w-4 text-background" />
@@ -421,7 +456,7 @@ export default function ChatHistory() {
 
                               {/* AI Response */}
                               {group.aiMessage && (
-                                <div className={`p-4 ${group.isStandaloneAI ? '' : 'bg-muted/30'}`}>
+                                <div className={`p-4 ${group.isStandaloneAI ? '' : 'bg-muted/30'}`} data-message-id={group.aiMessage.id}>
                                   <div className="flex items-start gap-3">
                                     <div className="shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                                       <Sparkles className="h-4 w-4 text-primary" />

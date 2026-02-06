@@ -1,53 +1,88 @@
-import { useEffect, useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Plus, Moon, Sun } from "lucide-react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Session, User } from "@supabase/supabase-js";
+import { User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
-import { SessionTimer } from "@/components/SessionTimer";
-import { ModernChatInterface, useTheme } from "@/components/chat-ui";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
+import { useTheme } from "@/components/chat-ui";
+import { format } from "date-fns";
+import { ScrollArea } from "@/components/ui/scroll-area";
+
+interface Conversation {
+  id: string;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  message_count?: number;
+  session_id: string;
+  user_sessions?: {
+    model_name: string;
+    plan_id: string;
+  };
+}
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { toast } = useToast();
   const { resolvedTheme, toggleTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
-  const [session, setSession] = useState<Session | null>(null);
-  const [activeSession, setActiveSession] = useState<any>(null);
-  const [allActiveSessions, setAllActiveSessions] = useState<any[]>([]);
+  const [activeSessions, setActiveSessions] = useState<any[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-  const [tokenStats, setTokenStats] = useState<{ used: number; limit: number } | null>(null);
-  const [showPlanSelector, setShowPlanSelector] = useState(false);
+
+  const loadActiveSessions = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('user_sessions')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('status', 'active')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setActiveSessions(data || []);
+    } catch (error: any) {
+      console.error('Error loading sessions:', error);
+    }
+  }, [user?.id]);
+
+  const loadConversations = useCallback(async () => {
+    try {
+      const { data, error } = await (supabase as any)
+        .from('conversations')
+        .select(`
+          *,
+          chat_messages(count),
+          user_sessions(model_name, plan_id)
+        `)
+        .eq('user_id', user?.id)
+        .order('updated_at', { ascending: false })
+        .limit(10);
+
+      if (error) throw error;
+
+      const conversationsWithCount = data?.map((conv: any) => ({
+        ...conv,
+        message_count: conv.chat_messages?.[0]?.count || 0
+      })) || [];
+
+      setConversations(conversationsWithCount);
+    } catch (error: any) {
+      console.error('Error loading conversations:', error);
+    }
+  }, [user?.id]);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        setSession(session);
+      (_event, session) => {
         setUser(session?.user ?? null);
       }
     );
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
       setUser(session?.user ?? null);
       if (!session) {
         navigate("/auth");
@@ -60,77 +95,13 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (user) {
-      const sessionId = location.state?.sessionId;
-      loadActiveSession(sessionId);
-      loadAllActiveSessions();
+      loadActiveSessions();
+      loadConversations();
     }
-  }, [user, location.state?.sessionId]);
+  }, [user, loadActiveSessions, loadConversations]);
 
-  const loadActiveSession = async (sessionId?: string) => {
-    try {
-      let query = (supabase as any)
-        .from('user_sessions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('status', 'active');
-
-      if (sessionId) {
-        query = query.eq('id', sessionId).single();
-      } else {
-        query = query.order('created_at', { ascending: false }).limit(1).single();
-      }
-
-      const { data, error } = await query;
-
-      if (error && error.code !== 'PGRST116') {
-        throw error;
-      }
-
-      setActiveSession(data);
-
-      // Load token limit for this session
-      if (data) {
-        const { data: config } = await (supabase as any)
-          .from('session_config')
-          .select('token_limit_per_hour')
-          .eq('plan_id', data.plan_id)
-          .eq('model_name', data.model_name)
-          .single();
-
-        if (config) {
-          setTokenStats({
-            used: data.tokens_used || 0,
-            limit: config.token_limit_per_hour,
-          });
-        }
-      }
-    } catch (error: any) {
-      console.error('Error loading session:', error);
-    }
-  };
-
-  const loadAllActiveSessions = async () => {
-    try {
-      const { data, error } = await (supabase as any)
-        .from('user_sessions')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('status', 'active')
-        .order('created_at', { ascending: false });
-
-      if (error) throw error;
-
-      setAllActiveSessions(data || []);
-    } catch (error: any) {
-      console.error('Error loading all sessions:', error);
-    }
-  };
-
-  const handleSessionSwitch = async (sessionId: string) => {
-    if (sessionId === activeSession?.id) return;
-    
-    setTokenStats(null);
-    await loadActiveSession(sessionId);
+  const handleStartChat = (sessionId: string) => {
+    navigate('/chat', { state: { sessionId } });
   };
 
   const handleSignOut = async () => {
@@ -155,17 +126,21 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="h-screen flex flex-col bg-background overflow-hidden">
-      {/* Minimal Header */}
+    <div className="min-h-screen bg-background">
+      {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
         <div className="flex h-14 items-center justify-between px-4 max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-6">
-            <div className="flex items-center gap-3 cursor-pointer" onClick={() => navigate('/home')}>
+            <button 
+              className="flex items-center gap-3 cursor-pointer bg-transparent border-0 p-0" 
+              onClick={() => navigate('/home')}
+              type="button"
+            >
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
                 <Sparkles className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-medium tracking-tight hidden sm:inline">AI Access Hub</span>
-            </div>
+            </button>
             <nav className="hidden md:flex items-center gap-1">
               <Button variant="ghost" size="sm" onClick={() => navigate('/home')} className="h-8 px-3 text-muted-foreground hover:text-foreground">
                 Home
@@ -185,21 +160,6 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3">
-            {allActiveSessions.length > 1 && activeSession && (
-              <Select value={activeSession.id} onValueChange={handleSessionSwitch}>
-                <SelectTrigger className="w-[180px] h-8 text-xs">
-                  <SelectValue placeholder="Select session" />
-                </SelectTrigger>
-                <SelectContent>
-                  {allActiveSessions.map((sess) => (
-                    <SelectItem key={sess.id} value={sess.id}>
-                      {sess.plan_id} - {sess.model_name.replace(/google\//g, '')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-            
             <Button
               variant="ghost"
               size="icon"
@@ -221,80 +181,152 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {activeSession ? (
-          <>
-            {/* Session Info Bar */}
-            <div className="border-b bg-muted/30 px-4 py-2">
-              <div className="flex items-center justify-between max-w-screen-2xl mx-auto">
-                <SessionTimer 
-                  session={activeSession} 
-                  onExpire={loadActiveSession}
-                  tokensUsed={tokenStats?.used}
-                  tokenLimit={tokenStats?.limit}
-                />
-                <Dialog open={showPlanSelector} onOpenChange={setShowPlanSelector}>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" size="sm" className="h-8">
-                      <Plus className="w-4 h-4 mr-2" />
-                      <span className="hidden sm:inline">New Session</span>
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="grid lg:grid-cols-3 gap-6">
+          {/* Active Sessions & Purchase */}
+          <div className="lg:col-span-1 space-y-6">
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight mb-2">Dashboard</h1>
+              <p className="text-sm text-muted-foreground">
+                Manage your sessions and start chatting
+              </p>
+            </div>
+
+            {/* Active Sessions */}
+            {activeSessions.length > 0 && (
+              <Card className="border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium">Active Sessions</CardTitle>
+                  <CardDescription className="text-xs">
+                    Click to start chatting
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {activeSessions.map((sess) => (
+                    <Button
+                      key={sess.id}
+                      variant="outline"
+                      className="w-full justify-between h-auto py-3"
+                      onClick={() => handleStartChat(sess.id)}
+                    >
+                      <div className="text-left">
+                        <div className="font-medium text-sm capitalize">
+                          {sess.model_name.replaceAll(/google\/|gemini-|-/g, ' ')}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {sess.plan_id} • {sess.hours_purchased}h
+                        </div>
+                      </div>
+                      <ChevronRight className="w-4 h-4" />
                     </Button>
-                  </DialogTrigger>
-                  <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle className="text-xl font-semibold">Purchase Additional Session</DialogTitle>
-                      <DialogDescription className="text-sm text-muted-foreground">
-                        Your current session will remain active. Select a plan for your next session.
-                      </DialogDescription>
-                    </DialogHeader>
-                    <div className="mt-4">
-                      <PlanSelector 
-                        onSessionStart={() => {
-                          loadActiveSession();
-                          loadAllActiveSessions();
-                          setShowPlanSelector(false);
-                          toast({
-                            title: "Session Queued",
-                            description: "Your new session will be available when the current one expires.",
-                          });
-                        }} 
-                      />
-                    </div>
-                  </DialogContent>
-                </Dialog>
-              </div>
-            </div>
-            
-            {/* Chat Interface */}
-            <div className="flex-1 overflow-hidden">
-              <ModernChatInterface 
-                session={activeSession}
-                onTokenUpdate={(used, limit) => setTokenStats({ used, limit })}
-                className="h-full"
-              />
-            </div>
-          </>
-        ) : (
-          <div className="flex-1 flex items-center justify-center p-4">
-            <Card className="border shadow-lg max-w-4xl w-full">
-              <CardHeader className="space-y-1 text-center pb-4">
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center mx-auto mb-4 shadow-lg">
-                  <Sparkles className="w-8 h-8 text-white" />
-                </div>
-                <CardTitle className="text-2xl font-semibold">Choose Your Plan</CardTitle>
-                <CardDescription className="text-base text-muted-foreground">
-                  Select a plan to start your AI session
+                  ))}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Purchase New Session */}
+            <Card className="border shadow-sm">
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base font-medium">
+                  {activeSessions.length > 0 ? 'Purchase Additional Session' : 'Choose Your Plan'}
+                </CardTitle>
+                <CardDescription className="text-xs">
+                  {activeSessions.length > 0 
+                    ? 'Add more time or try a different model' 
+                    : 'Select a plan to start your AI session'}
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <PlanSelector onSessionStart={() => {
-                  loadActiveSession();
-                  loadAllActiveSessions();
-                }} />
+                <PlanSelector 
+                  onSessionStart={() => {
+                    loadActiveSessions();
+                    toast({
+                      title: "Session Created",
+                      description: "Your new session is ready. Click it above to start chatting.",
+                    });
+                  }} 
+                />
               </CardContent>
             </Card>
           </div>
-        )}
+
+          {/* Recent Conversations */}
+          <div className="lg:col-span-2">
+            <Card className="border shadow-sm">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-base font-medium">Recent Conversations</CardTitle>
+                    <CardDescription className="text-xs">
+                      Your latest chat sessions
+                    </CardDescription>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={() => navigate('/chat-history')}
+                    className="h-8"
+                  >
+                    View All
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                {conversations.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
+                    <p className="text-sm text-muted-foreground mb-2">
+                      No conversations yet
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {activeSessions.length > 0 
+                        ? 'Click on an active session above to start chatting' 
+                        : 'Purchase a session to get started'}
+                    </p>
+                  </div>
+                ) : (
+                  <ScrollArea className="h-[500px]">
+                    <div className="space-y-2 pr-4">
+                      {conversations.map((conversation) => (
+                        <Card 
+                          key={conversation.id}
+                          className="group border shadow-none cursor-pointer transition-all hover:border-foreground/50 hover:bg-accent/50"
+                          onClick={() => navigate('/chat', { 
+                            state: { 
+                              sessionId: conversation.session_id,
+                              conversationId: conversation.id 
+                            } 
+                          })}
+                        >
+                          <CardHeader className="p-4">
+                            <div className="flex items-start justify-between gap-2">
+                              <div className="space-y-1 flex-1 min-w-0">
+                                <CardTitle className="text-sm font-medium truncate">
+                                  {conversation.title}
+                                </CardTitle>
+                                <CardDescription className="text-xs space-y-0.5">
+                                  <div>
+                                    {conversation.message_count} messages • {format(new Date(conversation.updated_at), 'MMM d, yyyy')}
+                                  </div>
+                                  {conversation.user_sessions && (
+                                    <div className="text-primary/80">
+                                      {conversation.user_sessions.plan_id} • {conversation.user_sessions.model_name.replace('google/', '')}
+                                    </div>
+                                  )}
+                                </CardDescription>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                            </div>
+                          </CardHeader>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
