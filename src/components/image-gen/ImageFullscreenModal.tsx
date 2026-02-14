@@ -81,12 +81,20 @@ export function ImageFullscreenModal({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [image, hasPrev, hasNext, onNavigate, onClose]);
 
-  const downloadImage = useCallback(() => {
+  const downloadImage = useCallback(async () => {
     if (!image) return;
-    const link = document.createElement('a');
-    link.href = image.url;
-    link.download = `sd-${image.seed || Date.now()}.png`;
-    link.click();
+    try {
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `sd-${image.seed || Date.now()}.png`;
+      link.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(image.url, '_blank');
+    }
   }, [image]);
 
   const copyPrompt = useCallback(async () => {
