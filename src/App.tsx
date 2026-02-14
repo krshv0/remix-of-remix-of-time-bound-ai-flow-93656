@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/chat-ui";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
-import Home from "./pages/Home";
+
 import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 
@@ -31,7 +31,7 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/auth" element={<Auth />} />
-            <Route path="/home" element={<Home />} />
+            <Route path="/home" element={<Dashboard />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/chat" element={<Chat />} />
             
