@@ -207,7 +207,7 @@ export const PlanSelector = ({ onSessionStart }: PlanSelectorProps) => {
               <div className="text-xs text-muted-foreground">per hour</div>
               {'credits' in plan && (
                 <div className="text-xs text-primary mt-1">
-                  {plan.credits} images/hour
+                  {(plan as any).credits} images/hour
                 </div>
               )}
             </CardContent>
