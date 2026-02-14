@@ -210,6 +210,8 @@ export type Database = {
           tokens_used: number | null
           updated_at: string
           user_id: string
+          videos_generated: number | null
+          videos_remaining: number | null
         }
         Insert: {
           created_at?: string
@@ -225,6 +227,8 @@ export type Database = {
           tokens_used?: number | null
           updated_at?: string
           user_id: string
+          videos_generated?: number | null
+          videos_remaining?: number | null
         }
         Update: {
           created_at?: string
@@ -240,8 +244,81 @@ export type Database = {
           tokens_used?: number | null
           updated_at?: string
           user_id?: string
+          videos_generated?: number | null
+          videos_remaining?: number | null
         }
         Relationships: []
+      }
+      video_generations: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          duration: number | null
+          error_message: string | null
+          fps: number | null
+          generation_time_seconds: number | null
+          id: string
+          metadata: Json | null
+          model_used: string | null
+          num_frames: number | null
+          prompt: string
+          resolution: string | null
+          retry_count: number | null
+          session_id: string
+          status: string
+          thumbnail_url: string | null
+          user_id: string
+          video_url: string | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          duration?: number | null
+          error_message?: string | null
+          fps?: number | null
+          generation_time_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          model_used?: string | null
+          num_frames?: number | null
+          prompt: string
+          resolution?: string | null
+          retry_count?: number | null
+          session_id: string
+          status?: string
+          thumbnail_url?: string | null
+          user_id: string
+          video_url?: string | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          duration?: number | null
+          error_message?: string | null
+          fps?: number | null
+          generation_time_seconds?: number | null
+          id?: string
+          metadata?: Json | null
+          model_used?: string | null
+          num_frames?: number | null
+          prompt?: string
+          resolution?: string | null
+          retry_count?: number | null
+          session_id?: string
+          status?: string
+          thumbnail_url?: string | null
+          user_id?: string
+          video_url?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_generations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "user_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
