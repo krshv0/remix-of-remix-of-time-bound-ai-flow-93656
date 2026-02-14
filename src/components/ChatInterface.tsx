@@ -2,7 +2,8 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Sparkles } from "lucide-react";
+import { Send, Sparkles, FileText, FileDown } from "lucide-react";
+import { downloadMarkdown, downloadDocx } from "@/lib/documentExport";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { FileAttachment } from "@/components/FileAttachment";
@@ -314,6 +315,20 @@ export const ChatInterface = ({ session, onTokenUpdate }: ChatInterfaceProps) =>
                     <div className="flex justify-start">
                       <div className="max-w-[85%] rounded px-4 py-3 bg-secondary text-foreground border border-border">
                         <MessageWithArtifacts content={aiResponse.content} />
+                        <div className="flex items-center gap-1 mt-2 pt-2 border-t border-border">
+                          <button
+                            onClick={() => downloadMarkdown(aiResponse.content)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            <FileText className="w-3 h-3" /> .md
+                          </button>
+                          <button
+                            onClick={() => downloadDocx(aiResponse.content)}
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                          >
+                            <FileDown className="w-3 h-3" /> .docx
+                          </button>
+                        </div>
                       </div>
                     </div>
                   )}
