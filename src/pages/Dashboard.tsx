@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon } from "lucide-react";
+import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
@@ -30,6 +30,7 @@ export default function Dashboard() {
   const { resolvedTheme, toggleTheme } = useTheme();
   const [user, setUser] = useState<User | null>(null);
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
+  const [expiredSessions, setExpiredSessions] = useState<any[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -44,6 +45,17 @@ export default function Dashboard() {
 
       if (error) throw error;
       setActiveSessions(data || []);
+
+      // Also load recent expired sessions
+      const { data: expired } = await (supabase as any)
+        .from('user_sessions')
+        .select('*')
+        .eq('user_id', user?.id)
+        .eq('status', 'expired')
+        .order('created_at', { ascending: false })
+        .limit(10);
+
+      setExpiredSessions(expired || []);
     } catch (error: any) {
       console.error('Error loading sessions:', error);
     }
@@ -241,6 +253,60 @@ export default function Dashboard() {
                           </div>
                         </div>
                         <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    );
+                  })}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Expired Sessions */}
+            {expiredSessions.length > 0 && (
+              <Card className="border shadow-sm">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base font-medium flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4" />
+                    Expired Sessions
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Click to renew and continue where you left off
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {expiredSessions.slice(0, 5).map((sess) => {
+                    const isImageGen = sess.session_type === 'image_generation';
+                    return (
+                      <Button
+                        key={sess.id}
+                        variant="outline"
+                        className="w-full justify-between h-auto py-3 opacity-75 hover:opacity-100"
+                        onClick={() => handleStartSession(sess)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            isImageGen 
+                              ? 'bg-gradient-to-br from-blue-500/50 to-purple-500/50' 
+                              : 'bg-gradient-to-br from-violet-500/50 to-purple-600/50'
+                          }`}>
+                            {isImageGen ? (
+                              <ImageIcon className="w-4 h-4 text-white" />
+                            ) : (
+                              <MessageSquare className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <div className="font-medium text-sm">
+                              {isImageGen 
+                                ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
+                                : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
+                              }
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {sess.plan_id?.replace('sd-', 'SD ')} • Expired • {isImageGen ? 'Image Gen' : 'Chat'}
+                            </div>
+                          </div>
+                        </div>
+                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
                       </Button>
                     );
                   })}
