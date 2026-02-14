@@ -199,16 +199,6 @@ export default function Home() {
           </Card>
 
           {/* Quick Links */}
-          <div className="grid md:grid-cols-2 gap-4">
-            <Button 
-              variant="outline" 
-              onClick={() => navigate('/chat-history')}
-              className="h-12 justify-start"
-            >
-              <span>View Chat History</span>
-              <ArrowRight className="w-4 h-4 ml-auto" />
-            </Button>
-          </div>
 
           {/* Expired Sessions */}
           {expiredSessions.length > 0 && (
