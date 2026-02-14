@@ -257,7 +257,7 @@ export default function Chat() {
           <div className="flex items-center gap-6">
             <button 
               className="flex items-center gap-3 cursor-pointer bg-transparent border-0 p-0" 
-              onClick={() => navigate('/home')}
+              onClick={() => navigate('/dashboard')}
               type="button"
             >
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-sm">
@@ -266,9 +266,6 @@ export default function Chat() {
               <span className="text-lg font-medium tracking-tight hidden sm:inline">AI Access Hub</span>
             </button>
             <nav className="hidden md:flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/home')} className="h-8 px-3 text-muted-foreground hover:text-foreground">
-                Home
-              </Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="h-8 px-3 text-muted-foreground hover:text-foreground">
                 Dashboard
               </Button>

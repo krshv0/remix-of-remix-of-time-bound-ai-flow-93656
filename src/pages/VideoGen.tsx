@@ -257,14 +257,13 @@ export default function VideoGenPage() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/80 backdrop-blur-lg">
         <div className="flex h-14 items-center justify-between px-4 max-w-screen-2xl mx-auto">
           <div className="flex items-center gap-6">
-            <button className="flex items-center gap-3 cursor-pointer bg-transparent border-0 p-0" onClick={() => navigate('/home')} type="button">
+            <button className="flex items-center gap-3 cursor-pointer bg-transparent border-0 p-0" onClick={() => navigate('/dashboard')} type="button">
               <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-purple-500 to-pink-600 flex items-center justify-center shadow-sm">
                 <Film className="w-4 h-4 text-white" />
               </div>
               <span className="text-lg font-medium tracking-tight hidden sm:inline">AI Video Studio</span>
             </button>
             <nav className="hidden md:flex items-center gap-1">
-              <Button variant="ghost" size="sm" onClick={() => navigate('/home')} className="h-8 px-3 text-muted-foreground hover:text-foreground">Home</Button>
               <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="h-8 px-3 text-muted-foreground hover:text-foreground">Dashboard</Button>
               <Button variant="ghost" size="sm" className="h-8 px-3 bg-primary/10 text-foreground">Video Studio</Button>
             </nav>

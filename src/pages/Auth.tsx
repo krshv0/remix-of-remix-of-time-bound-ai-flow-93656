@@ -62,7 +62,7 @@ export default function Auth() {
         title: "Welcome back!",
         description: "Successfully signed in.",
       });
-      navigate("/home");
+      navigate("/dashboard");
     } catch (error: any) {
       toast({
         title: "Error",
