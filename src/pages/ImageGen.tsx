@@ -86,8 +86,21 @@ export default function ImageGenPage() {
             .maybeSingle();
 
           if (expiredData) {
+            // Load expired session in read-only mode
             setExpiredSession(expiredData);
-            setShowRenewalDialog(true);
+            setActiveSession(expiredData);
+
+            const { data: config } = await (supabase as any)
+              .from('session_config')
+              .select('image_credits_per_hour')
+              .eq('plan_id', expiredData.plan_id)
+              .maybeSingle();
+
+            setGenerationStats({
+              imagesUsed: expiredData.images_generated || 0,
+              imagesLimit: config?.image_credits_per_hour || 20,
+            });
+            setTimeRemaining("Expired");
             return;
           }
         }
@@ -181,7 +194,7 @@ export default function ImageGenPage() {
 
   // Timer effect
   useEffect(() => {
-    if (!activeSession) return;
+    if (!activeSession || activeSession.status === 'expired') return;
 
     const updateTimer = () => {
       const now = Date.now();
@@ -234,7 +247,7 @@ export default function ImageGenPage() {
     await loadActiveSession(renewedSession.id);
   }, [loadActiveSession]);
 
-  if (loading || (!activeSession && !showRenewalDialog)) {
+  if (loading || !activeSession) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse">Loading...</div>
@@ -242,30 +255,7 @@ export default function ImageGenPage() {
     );
   }
 
-  // Show renewal dialog if session is expired
-  if (showRenewalDialog && expiredSession) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <SessionRenewalDialog
-          open={showRenewalDialog}
-          onClose={() => {
-            setShowRenewalDialog(false);
-            navigate('/dashboard');
-          }}
-          expiredSession={expiredSession}
-          onRenewed={handleSessionRenewed}
-        />
-      </div>
-    );
-  }
-
-  if (!activeSession) {
-    return (
-      <div className="h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
-      </div>
-    );
-  }
+  const isExpired = activeSession.status === 'expired';
 
   const modelDisplayName = activeSession.model_name
     ?.replace('stable-diffusion-', 'SD ')
@@ -336,8 +326,19 @@ export default function ImageGenPage() {
           <ImageGenInterface 
             session={activeSession}
             onCreditsUpdate={refreshStats}
+            isReadOnly={isExpired}
+            onRenewSession={() => setShowRenewalDialog(true)}
             className="h-full"
           />
+          {/* Session Renewal Dialog */}
+          {showRenewalDialog && expiredSession && (
+            <SessionRenewalDialog
+              open={showRenewalDialog}
+              onClose={() => setShowRenewalDialog(false)}
+              expiredSession={expiredSession}
+              onRenewed={handleSessionRenewed}
+            />
+          )}
         </div>
 
         {/* Stats Sidebar */}
