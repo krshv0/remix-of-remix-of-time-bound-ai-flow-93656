@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, RefreshCw } from "lucide-react";
+import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, RefreshCw, Clock, Zap } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
@@ -46,7 +46,6 @@ export default function Dashboard() {
       if (error) throw error;
       setActiveSessions(data || []);
 
-      // Also load recent expired sessions
       const { data: expired } = await (supabase as any)
         .from('user_sessions')
         .select('*')
@@ -113,7 +112,6 @@ export default function Dashboard() {
   }, [user, loadActiveSessions, loadConversations]);
 
   const handleStartSession = (session: any) => {
-    // Route based on session type
     if (session.session_type === 'image_generation') {
       navigate('/image-gen', { state: { sessionId: session.id } });
     } else {
@@ -136,11 +134,13 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-pulse">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
   }
+
+  const hasAnySessions = activeSessions.length > 0 || expiredSessions.length > 0;
 
   return (
     <div className="min-h-screen bg-background">
@@ -169,15 +169,9 @@ export default function Dashboard() {
           </div>
           
           <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={toggleTheme}
-              className="h-8 w-8"
-            >
+            <Button variant="ghost" size="icon" onClick={toggleTheme} className="h-8 w-8">
               {resolvedTheme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
             </Button>
-            
             <span className="text-xs text-muted-foreground hidden lg:inline px-2 py-1 bg-muted rounded-md">
               {user?.email}
             </span>
@@ -190,62 +184,70 @@ export default function Dashboard() {
       </header>
 
       {/* Main Content */}
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Active Sessions & Purchase */}
-          <div className="lg:col-span-1 space-y-6">
-            <div>
-              <h1 className="text-2xl font-bold tracking-tight mb-2">Dashboard</h1>
-              <p className="text-sm text-muted-foreground">
-                Manage your sessions and start chatting
-              </p>
+      <div className="px-4 py-6 max-w-screen-2xl mx-auto">
+        {/* Page Title Row */}
+        <div className="flex items-end justify-between mb-6">
+          <div>
+            <h1 className="text-xl font-semibold tracking-tight">Dashboard</h1>
+            <p className="text-xs text-muted-foreground mt-1">Manage sessions, view history, and start chatting</p>
+          </div>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted">
+              <Zap className="w-3 h-3 text-green-500" />
+              <span>{activeSessions.length} active</span>
             </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted">
+              <Clock className="w-3 h-3 text-muted-foreground" />
+              <span>{expiredSessions.length} expired</span>
+            </div>
+          </div>
+        </div>
 
+        {/* Top Row: Active + Expired Sessions side-by-side */}
+        {hasAnySessions && (
+          <div className="grid md:grid-cols-2 gap-4 mb-4">
             {/* Active Sessions */}
             {activeSessions.length > 0 && (
-              <Card className="border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium">Active Sessions</CardTitle>
-                  <CardDescription className="text-xs">
-                    Click to continue your session
-                  </CardDescription>
+              <Card className="border bg-card">
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                    <CardTitle className="text-sm font-medium">Active Sessions</CardTitle>
+                  </div>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="px-4 pb-4 space-y-1.5">
                   {activeSessions.map((sess) => {
                     const isImageGen = sess.session_type === 'image_generation';
                     return (
-                      <Button
+                      <button
                         key={sess.id}
-                        variant="outline"
-                        className="w-full justify-between h-auto py-3"
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60 group border border-transparent hover:border-border"
                         onClick={() => handleStartSession(sess)}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            isImageGen 
-                              ? 'bg-gradient-to-br from-blue-500 to-purple-500' 
-                              : 'bg-gradient-to-br from-violet-500 to-purple-600'
-                          }`}>
-                            {isImageGen ? (
-                              <ImageIcon className="w-4 h-4 text-white" />
-                            ) : (
-                              <MessageSquare className="w-4 h-4 text-white" />
-                            )}
+                        <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${
+                          isImageGen 
+                            ? 'bg-gradient-to-br from-blue-500 to-purple-500' 
+                            : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                        }`}>
+                          {isImageGen ? (
+                            <ImageIcon className="w-3.5 h-3.5 text-white" />
+                          ) : (
+                            <MessageSquare className="w-3.5 h-3.5 text-white" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">
+                            {isImageGen 
+                              ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
+                              : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
+                            }
                           </div>
-                          <div className="text-left">
-                            <div className="font-medium text-sm">
-                              {isImageGen 
-                                ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
-                                : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
-                              }
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {sess.plan_id?.replace('sd-', 'SD ')} • {sess.hours_purchased}h • {isImageGen ? 'Image Gen' : 'Chat'}
-                            </div>
+                          <div className="text-xs text-muted-foreground">
+                            {sess.plan_id?.replace('sd-', 'SD ')} • {sess.hours_purchased}h
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4" />
-                      </Button>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
                     );
                   })}
                 </CardContent>
@@ -254,63 +256,63 @@ export default function Dashboard() {
 
             {/* Expired Sessions */}
             {expiredSessions.length > 0 && (
-              <Card className="border shadow-sm">
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-base font-medium flex items-center gap-2">
-                    <RefreshCw className="w-4 h-4" />
-                    Expired Sessions
-                  </CardTitle>
-                  <CardDescription className="text-xs">
-                    Click to renew and continue where you left off
-                  </CardDescription>
+              <Card className="border bg-card">
+                <CardHeader className="pb-2 pt-4 px-4">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-3.5 h-3.5 text-muted-foreground" />
+                    <CardTitle className="text-sm font-medium">Expired Sessions</CardTitle>
+                  </div>
+                  <CardDescription className="text-xs">Click to view or renew</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-2">
+                <CardContent className="px-4 pb-4 space-y-1.5">
                   {expiredSessions.slice(0, 5).map((sess) => {
                     const isImageGen = sess.session_type === 'image_generation';
                     return (
-                      <Button
+                      <button
                         key={sess.id}
-                        variant="outline"
-                        className="w-full justify-between h-auto py-3 opacity-75 hover:opacity-100"
+                        className="w-full flex items-center gap-3 rounded-lg px-3 py-2.5 text-left transition-colors hover:bg-accent/60 group opacity-70 hover:opacity-100 border border-transparent hover:border-border"
                         onClick={() => handleStartSession(sess)}
                       >
-                        <div className="flex items-center gap-3">
-                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                            isImageGen 
-                              ? 'bg-gradient-to-br from-blue-500/50 to-purple-500/50' 
-                              : 'bg-gradient-to-br from-violet-500/50 to-purple-600/50'
-                          }`}>
-                            {isImageGen ? (
-                              <ImageIcon className="w-4 h-4 text-white" />
-                            ) : (
-                              <MessageSquare className="w-4 h-4 text-white" />
-                            )}
+                        <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${
+                          isImageGen 
+                            ? 'bg-gradient-to-br from-blue-500/40 to-purple-500/40' 
+                            : 'bg-gradient-to-br from-violet-500/40 to-purple-600/40'
+                        }`}>
+                          {isImageGen ? (
+                            <ImageIcon className="w-3.5 h-3.5 text-white/80" />
+                          ) : (
+                            <MessageSquare className="w-3.5 h-3.5 text-white/80" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate">
+                            {isImageGen 
+                              ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
+                              : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
+                            }
                           </div>
-                          <div className="text-left">
-                            <div className="font-medium text-sm">
-                              {isImageGen 
-                                ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
-                                : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
-                              }
-                            </div>
-                            <div className="text-xs text-muted-foreground">
-                              {sess.plan_id?.replace('sd-', 'SD ')} • Expired • {isImageGen ? 'Image Gen' : 'Chat'}
-                            </div>
+                          <div className="text-xs text-muted-foreground">
+                            {sess.plan_id?.replace('sd-', 'SD ')} • Expired
                           </div>
                         </div>
-                        <RefreshCw className="w-4 h-4 text-muted-foreground" />
-                      </Button>
+                        <RefreshCw className="w-3.5 h-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                      </button>
                     );
                   })}
                 </CardContent>
               </Card>
             )}
+          </div>
+        )}
 
-            {/* Purchase New Session */}
-            <Card className="border shadow-sm">
-              <CardHeader className="pb-3">
-                <CardTitle className="text-base font-medium">
-                  {activeSessions.length > 0 ? 'Purchase Additional Session' : 'Choose Your Plan'}
+        {/* Bottom Row: Purchase + Conversations */}
+        <div className="grid lg:grid-cols-5 gap-4">
+          {/* Purchase New Session */}
+          <div className="lg:col-span-2">
+            <Card className="border bg-card h-full">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-medium">
+                  {activeSessions.length > 0 ? 'New Session' : 'Get Started'}
                 </CardTitle>
                 <CardDescription className="text-xs">
                   {activeSessions.length > 0 
@@ -318,7 +320,7 @@ export default function Dashboard() {
                     : 'Select a plan to start your AI session'}
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4">
                 <PlanSelector 
                   onSessionStart={() => {
                     loadActiveSessions();
@@ -333,38 +335,30 @@ export default function Dashboard() {
           </div>
 
           {/* Recent Conversations */}
-          <div className="lg:col-span-2">
-            <Card className="border shadow-sm">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-base font-medium">Recent Conversations</CardTitle>
-                    <CardDescription className="text-xs">
-                      Your latest chat sessions
-                    </CardDescription>
-                  </div>
-                </div>
+          <div className="lg:col-span-3">
+            <Card className="border bg-card h-full">
+              <CardHeader className="pb-2 pt-4 px-4">
+                <CardTitle className="text-sm font-medium">Recent Conversations</CardTitle>
+                <CardDescription className="text-xs">Your latest chat sessions</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-4 pb-4">
                 {conversations.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center py-12 text-center">
-                    <MessageSquare className="w-12 h-12 text-muted-foreground mb-4" />
-                    <p className="text-sm text-muted-foreground mb-2">
-                      No conversations yet
-                    </p>
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <MessageSquare className="w-10 h-10 text-muted-foreground/40 mb-3" />
+                    <p className="text-sm text-muted-foreground mb-1">No conversations yet</p>
                     <p className="text-xs text-muted-foreground">
                       {activeSessions.length > 0 
-                        ? 'Click on an active session above to start chatting' 
+                        ? 'Click an active session to start chatting' 
                         : 'Purchase a session to get started'}
                     </p>
                   </div>
                 ) : (
-                  <ScrollArea className="h-[500px]">
-                    <div className="space-y-2 pr-4">
+                  <ScrollArea className="h-[420px]">
+                    <div className="space-y-1 pr-3">
                       {conversations.map((conversation) => (
-                        <Card 
+                        <button
                           key={conversation.id}
-                          className="group border shadow-none cursor-pointer transition-all hover:border-foreground/50 hover:bg-accent/50"
+                          className="w-full flex items-center gap-3 rounded-lg px-3 py-3 text-left transition-colors hover:bg-accent/60 group border border-transparent hover:border-border"
                           onClick={() => navigate('/chat', { 
                             state: { 
                               sessionId: conversation.session_id,
@@ -372,27 +366,25 @@ export default function Dashboard() {
                             } 
                           })}
                         >
-                          <CardHeader className="p-4">
-                            <div className="flex items-start justify-between gap-2">
-                              <div className="space-y-1 flex-1 min-w-0">
-                                <CardTitle className="text-sm font-medium truncate">
-                                  {conversation.title}
-                                </CardTitle>
-                                <CardDescription className="text-xs space-y-0.5">
-                                  <div>
-                                    {conversation.message_count} messages • {format(new Date(conversation.updated_at), 'MMM d, yyyy')}
-                                  </div>
-                                  {conversation.user_sessions && (
-                                    <div className="text-primary/80">
-                                      {conversation.user_sessions.plan_id} • {conversation.user_sessions.model_name.replace('google/', '')}
-                                    </div>
-                                  )}
-                                </CardDescription>
-                              </div>
-                              <ChevronRight className="w-4 h-4 text-muted-foreground" />
+                          <div className="w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center bg-muted">
+                            <MessageSquare className="w-3.5 h-3.5 text-muted-foreground" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="text-sm font-medium truncate">{conversation.title}</div>
+                            <div className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                              <span>{conversation.message_count} msgs</span>
+                              <span className="text-muted-foreground/40">•</span>
+                              <span>{format(new Date(conversation.updated_at), 'MMM d')}</span>
+                              {conversation.user_sessions && (
+                                <>
+                                  <span className="text-muted-foreground/40">•</span>
+                                  <span className="text-primary/70">{conversation.user_sessions.model_name.replace('google/', '')}</span>
+                                </>
+                              )}
                             </div>
-                          </CardHeader>
-                        </Card>
+                          </div>
+                          <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                        </button>
                       ))}
                     </div>
                   </ScrollArea>
