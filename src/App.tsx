@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Chat from "./pages/Chat";
 
 import ImageGen from "./pages/ImageGen";
+import VideoGen from "./pages/VideoGen";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,6 +36,7 @@ const App = () => (
             <Route path="/chat" element={<Chat />} />
             
             <Route path="/image-gen" element={<ImageGen />} />
+            <Route path="/video-gen" element={<VideoGen />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

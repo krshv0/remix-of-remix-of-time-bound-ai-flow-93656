@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, Clock, Zap } from "lucide-react";
+import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, Clock, Zap, Film, Video } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
@@ -102,6 +102,8 @@ export default function Dashboard() {
   const handleStartSession = (session: any) => {
     if (session.session_type === 'image_generation') {
       navigate('/image-gen', { state: { sessionId: session.id } });
+    } else if (session.session_type === 'video') {
+      navigate('/video-gen', { state: { sessionId: session.id } });
     } else {
       navigate('/chat', { state: { sessionId: session.id } });
     }
@@ -222,6 +224,7 @@ export default function Dashboard() {
                   <div className="space-y-1.5 pr-3">
                     {activeSessions.map((sess) => {
                       const isImageGen = sess.session_type === 'image_generation';
+                      const isVideo = sess.session_type === 'video';
                       return (
                         <button
                           key={sess.id}
@@ -229,11 +232,15 @@ export default function Dashboard() {
                           onClick={() => handleStartSession(sess)}
                         >
                           <div className={`w-8 h-8 rounded-lg flex-shrink-0 flex items-center justify-center ${
-                            isImageGen
-                              ? 'bg-gradient-to-br from-blue-500 to-purple-500'
-                              : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                            isVideo
+                              ? 'bg-gradient-to-br from-purple-500 to-pink-600'
+                              : isImageGen
+                                ? 'bg-gradient-to-br from-blue-500 to-purple-500'
+                                : 'bg-gradient-to-br from-violet-500 to-purple-600'
                           }`}>
-                            {isImageGen ? (
+                            {isVideo ? (
+                              <Video className="w-3.5 h-3.5 text-white" />
+                            ) : isImageGen ? (
                               <ImageIcon className="w-3.5 h-3.5 text-white" />
                             ) : (
                               <MessageSquare className="w-3.5 h-3.5 text-white" />
@@ -241,13 +248,18 @@ export default function Dashboard() {
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="font-medium text-sm truncate">
-                              {isImageGen
-                                ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
-                                : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
+                              {isVideo
+                                ? 'HunyuanVideo'
+                                : isImageGen
+                                  ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
+                                  : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
                               }
                             </div>
                             <div className="text-xs text-muted-foreground">
-                              {sess.plan_id?.replace('sd-', 'SD ')} • {sess.hours_purchased}h
+                              {isVideo
+                                ? `${sess.videos_remaining || 0} videos remaining`
+                                : `${sess.plan_id?.replace('sd-', 'SD ')} • ${sess.hours_purchased}h`
+                              }
                             </div>
                           </div>
                           <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
