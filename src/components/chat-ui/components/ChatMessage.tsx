@@ -4,8 +4,7 @@
  */
 
 import { useState, memo } from 'react';
-import { Copy, Check, RefreshCw, User, Sparkles, FileText, FileDown } from 'lucide-react';
-import { downloadMarkdown, downloadDocx } from '@/lib/documentExport';
+import { Copy, Check, RefreshCw, User, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { MarkdownRenderer } from '../renderers/MarkdownRenderer';
 import { Message, FileAttachment } from '../types';
@@ -166,30 +165,6 @@ export const ChatMessage = memo(function ChatMessage({
                     Copy
                   </>
                 )}
-              </button>
-              <button
-                onClick={() => downloadMarkdown(message.content)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs',
-                  'text-muted-foreground hover:text-foreground hover:bg-muted',
-                  'transition-colors'
-                )}
-                aria-label="Export as Markdown"
-              >
-                <FileText className="w-3 h-3" />
-                .md
-              </button>
-              <button
-                onClick={() => downloadDocx(message.content)}
-                className={cn(
-                  'inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-xs',
-                  'text-muted-foreground hover:text-foreground hover:bg-muted',
-                  'transition-colors'
-                )}
-                aria-label="Export as DOCX"
-              >
-                <FileDown className="w-3 h-3" />
-                .docx
               </button>
               {onRegenerate && isLast && (
                 <button
