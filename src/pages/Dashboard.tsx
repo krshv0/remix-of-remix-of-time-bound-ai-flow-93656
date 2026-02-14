@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight } from "lucide-react";
+import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
@@ -100,8 +100,13 @@ export default function Dashboard() {
     }
   }, [user, loadActiveSessions, loadConversations]);
 
-  const handleStartChat = (sessionId: string) => {
-    navigate('/chat', { state: { sessionId } });
+  const handleStartSession = (session: any) => {
+    // Route based on session type
+    if (session.session_type === 'image_generation') {
+      navigate('/image-gen', { state: { sessionId: session.id } });
+    } else {
+      navigate('/chat', { state: { sessionId: session.id } });
+    }
   };
 
   const handleSignOut = async () => {
@@ -198,28 +203,47 @@ export default function Dashboard() {
                 <CardHeader className="pb-3">
                   <CardTitle className="text-base font-medium">Active Sessions</CardTitle>
                   <CardDescription className="text-xs">
-                    Click to start chatting
+                    Click to continue your session
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  {activeSessions.map((sess) => (
-                    <Button
-                      key={sess.id}
-                      variant="outline"
-                      className="w-full justify-between h-auto py-3"
-                      onClick={() => handleStartChat(sess.id)}
-                    >
-                      <div className="text-left">
-                        <div className="font-medium text-sm capitalize">
-                          {sess.model_name.replaceAll(/google\/|gemini-|-/g, ' ')}
+                  {activeSessions.map((sess) => {
+                    const isImageGen = sess.session_type === 'image_generation';
+                    return (
+                      <Button
+                        key={sess.id}
+                        variant="outline"
+                        className="w-full justify-between h-auto py-3"
+                        onClick={() => handleStartSession(sess)}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                            isImageGen 
+                              ? 'bg-gradient-to-br from-blue-500 to-purple-500' 
+                              : 'bg-gradient-to-br from-violet-500 to-purple-600'
+                          }`}>
+                            {isImageGen ? (
+                              <ImageIcon className="w-4 h-4 text-white" />
+                            ) : (
+                              <MessageSquare className="w-4 h-4 text-white" />
+                            )}
+                          </div>
+                          <div className="text-left">
+                            <div className="font-medium text-sm">
+                              {isImageGen 
+                                ? sess.model_name?.replace('stable-diffusion-', 'SD ')?.replace('-', ' ') || 'Stable Diffusion'
+                                : sess.model_name?.replaceAll(/google\/|gemini-|-/g, ' ')
+                              }
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {sess.plan_id?.replace('sd-', 'SD ')} • {sess.hours_purchased}h • {isImageGen ? 'Image Gen' : 'Chat'}
+                            </div>
+                          </div>
                         </div>
-                        <div className="text-xs text-muted-foreground">
-                          {sess.plan_id} • {sess.hours_purchased}h
-                        </div>
-                      </div>
-                      <ChevronRight className="w-4 h-4" />
-                    </Button>
-                  ))}
+                        <ChevronRight className="w-4 h-4" />
+                      </Button>
+                    );
+                  })}
                 </CardContent>
               </Card>
             )}
