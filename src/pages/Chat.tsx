@@ -272,14 +272,6 @@ export default function Chat() {
               <Button variant="ghost" size="sm" onClick={() => navigate('/dashboard')} className="h-8 px-3 text-muted-foreground hover:text-foreground">
                 Dashboard
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/chat-history')} 
-                className="h-8 px-3 text-muted-foreground hover:text-foreground"
-              >
-                History
-              </Button>
             </nav>
           </div>
           

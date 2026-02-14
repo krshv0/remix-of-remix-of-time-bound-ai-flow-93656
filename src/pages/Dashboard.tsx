@@ -165,14 +165,6 @@ export default function Dashboard() {
               <Button variant="ghost" size="sm" className="h-8 px-3 bg-primary/10 text-foreground">
                 Dashboard
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => navigate('/chat-history')} 
-                className="h-8 px-3 text-muted-foreground hover:text-foreground"
-              >
-                History
-              </Button>
             </nav>
           </div>
           
@@ -351,14 +343,6 @@ export default function Dashboard() {
                       Your latest chat sessions
                     </CardDescription>
                   </div>
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    onClick={() => navigate('/chat-history')}
-                    className="h-8"
-                  >
-                    View All
-                  </Button>
                 </div>
               </CardHeader>
               <CardContent>
