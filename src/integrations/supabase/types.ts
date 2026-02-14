@@ -86,37 +86,64 @@ export type Database = {
       }
       image_generations: {
         Row: {
+          batch_count: number | null
+          cfg_scale: number | null
           conversation_id: string | null
           created_at: string | null
+          generation_time_ms: number | null
+          height: number | null
           id: string
+          image_session_id: string | null
           image_url: string
           model_used: string | null
+          negative_prompt: string | null
           prompt: string
           resolution: string | null
+          seed: number | null
           session_id: string
+          steps: number | null
           user_id: string
+          width: number | null
         }
         Insert: {
+          batch_count?: number | null
+          cfg_scale?: number | null
           conversation_id?: string | null
           created_at?: string | null
+          generation_time_ms?: number | null
+          height?: number | null
           id?: string
+          image_session_id?: string | null
           image_url: string
           model_used?: string | null
+          negative_prompt?: string | null
           prompt: string
           resolution?: string | null
+          seed?: number | null
           session_id: string
+          steps?: number | null
           user_id: string
+          width?: number | null
         }
         Update: {
+          batch_count?: number | null
+          cfg_scale?: number | null
           conversation_id?: string | null
           created_at?: string | null
+          generation_time_ms?: number | null
+          height?: number | null
           id?: string
+          image_session_id?: string | null
           image_url?: string
           model_used?: string | null
+          negative_prompt?: string | null
           prompt?: string
           resolution?: string | null
+          seed?: number | null
           session_id?: string
+          steps?: number | null
           user_id?: string
+          width?: number | null
         }
         Relationships: [
           {
@@ -144,6 +171,7 @@ export type Database = {
           plan_id: string
           token_limit_per_hour: number
           updated_at: string
+          video_credits_per_hour: number | null
         }
         Insert: {
           created_at?: string
@@ -153,6 +181,7 @@ export type Database = {
           plan_id: string
           token_limit_per_hour: number
           updated_at?: string
+          video_credits_per_hour?: number | null
         }
         Update: {
           created_at?: string
@@ -162,6 +191,7 @@ export type Database = {
           plan_id?: string
           token_limit_per_hour?: number
           updated_at?: string
+          video_credits_per_hour?: number | null
         }
         Relationships: []
       }
@@ -175,6 +205,7 @@ export type Database = {
           model_name: string
           plan_id: string
           price_paid: number
+          session_type: string | null
           status: string
           tokens_used: number | null
           updated_at: string
@@ -189,6 +220,7 @@ export type Database = {
           model_name: string
           plan_id: string
           price_paid: number
+          session_type?: string | null
           status?: string
           tokens_used?: number | null
           updated_at?: string
@@ -203,6 +235,7 @@ export type Database = {
           model_name?: string
           plan_id?: string
           price_paid?: number
+          session_type?: string | null
           status?: string
           tokens_used?: number | null
           updated_at?: string
