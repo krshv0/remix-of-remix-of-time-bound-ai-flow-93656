@@ -25,7 +25,7 @@ import { ChatSidebar } from './components/ChatSidebar';
 import { Message, FileAttachment, Conversation } from './types';
 import { groupMessagesIntoBlocks } from './utils/messageBlocks';
 import { ImageGenerator } from '@/components/chat/ImageGenerator';
-import { Image as ImageIcon } from 'lucide-react';
+import { Image as ImageIcon, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface ModernChatInterfaceProps {
@@ -39,6 +39,8 @@ interface ModernChatInterfaceProps {
   } | null;
   onTokenUpdate?: (tokensUsed: number, tokenLimit: number) => void;
   onGenerationUpdate?: () => void;
+  isReadOnly?: boolean;
+  onRenewSession?: () => void;
   className?: string;
 }
 
@@ -59,6 +61,8 @@ export function ModernChatInterface({
   generationStats,
   onTokenUpdate,
   onGenerationUpdate,
+  isReadOnly = false,
+  onRenewSession,
   className,
 }: ModernChatInterfaceProps) {
   const { toast } = useToast();
@@ -593,6 +597,23 @@ export function ModernChatInterface({
           />
         </div>
 
+        {/* Expired session banner */}
+        {isReadOnly && (
+          <div className="max-w-3xl mx-auto px-4 pb-2">
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted border">
+              <p className="text-sm text-muted-foreground">
+                This session has expired. You can view all content but cannot send new messages.
+              </p>
+              {onRenewSession && (
+                <Button size="sm" onClick={onRenewSession} className="shrink-0">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Renew Session
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Error banner */}
         {error && (
           <div className="max-w-3xl mx-auto px-4 pb-2">
@@ -605,57 +626,59 @@ export function ModernChatInterface({
         )}
 
         {/* Input area */}
-        <div className="border-t bg-background/80 backdrop-blur-lg">
-          <div className="max-w-3xl mx-auto p-4 space-y-3">
-            {/* Image Generator */}
-            {showImageGenerator && generationStats && (
-              <ImageGenerator
-                sessionId={session.id}
-                conversationId={conversationId || undefined}
-                creditsRemaining={generationStats.imagesLimit - generationStats.imagesUsed}
-                onImageGenerated={() => {
-                  if (onGenerationUpdate) onGenerationUpdate();
-                }}
-                onClose={() => setShowImageGenerator(false)}
-              />
-            )}
-
-            <div className="flex items-end gap-2">
-              {/* Image Generation Button */}
-              {generationStats && generationStats.imagesLimit > 0 && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setShowImageGenerator(!showImageGenerator)}
-                  title="Generate Image"
-                  className={cn(
-                    "h-10 w-10 shrink-0",
-                    showImageGenerator && "bg-primary/10 border-primary"
-                  )}
-                >
-                  <ImageIcon className="w-4 h-4" />
-                </Button>
-              )}
-
-              {/* Navigation trigger - placed next to input */}
-              {hasMessages && (
-                <NavigationTrigger
-                  onClick={openNav}
-                  messageCount={messageBlocks.length}
-                  variant="compact"
+        {!isReadOnly && (
+          <div className="border-t bg-background/80 backdrop-blur-lg">
+            <div className="max-w-3xl mx-auto p-4 space-y-3">
+              {/* Image Generator */}
+              {showImageGenerator && generationStats && (
+                <ImageGenerator
+                  sessionId={session.id}
+                  conversationId={conversationId || undefined}
+                  creditsRemaining={generationStats.imagesLimit - generationStats.imagesUsed}
+                  onImageGenerated={() => {
+                    if (onGenerationUpdate) onGenerationUpdate();
+                  }}
+                  onClose={() => setShowImageGenerator(false)}
                 />
               )}
-              <div className="flex-1">
-                <ChatInput
-                  onSend={handleSend}
-                  onCancel={handleCancel}
-                  isLoading={isTyping}
-                  placeholder={`Message ${modelDisplayName}...`}
-                />
+
+              <div className="flex items-end gap-2">
+                {/* Image Generation Button */}
+                {generationStats && generationStats.imagesLimit > 0 && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => setShowImageGenerator(!showImageGenerator)}
+                    title="Generate Image"
+                    className={cn(
+                      "h-10 w-10 shrink-0",
+                      showImageGenerator && "bg-primary/10 border-primary"
+                    )}
+                  >
+                    <ImageIcon className="w-4 h-4" />
+                  </Button>
+                )}
+
+                {/* Navigation trigger - placed next to input */}
+                {hasMessages && (
+                  <NavigationTrigger
+                    onClick={openNav}
+                    messageCount={messageBlocks.length}
+                    variant="compact"
+                  />
+                )}
+                <div className="flex-1">
+                  <ChatInput
+                    onSend={handleSend}
+                    onCancel={handleCancel}
+                    isLoading={isTyping}
+                    placeholder={`Message ${modelDisplayName}...`}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

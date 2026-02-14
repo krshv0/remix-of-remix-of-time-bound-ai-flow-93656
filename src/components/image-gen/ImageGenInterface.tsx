@@ -32,6 +32,8 @@ import {
 interface ImageGenInterfaceProps {
   session: any;
   onCreditsUpdate?: () => void;
+  isReadOnly?: boolean;
+  onRenewSession?: () => void;
   className?: string;
 }
 
@@ -107,6 +109,8 @@ function groupGenerationsIntoBlocks(generations: ImageGeneration[]): GenerationB
 export function ImageGenInterface({
   session,
   onCreditsUpdate,
+  isReadOnly = false,
+  onRenewSession,
   className,
 }: ImageGenInterfaceProps) {
   const { toast } = useToast();
@@ -412,6 +416,23 @@ export function ImageGenInterface({
           </div>
         </div>
 
+        {/* Expired session banner */}
+        {isReadOnly && (
+          <div className="max-w-4xl mx-auto px-4 pb-2">
+            <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-muted border">
+              <p className="text-sm text-muted-foreground">
+                This session has expired. You can view all generated images but cannot create new ones.
+              </p>
+              {onRenewSession && (
+                <Button size="sm" onClick={onRenewSession} className="shrink-0">
+                  <RefreshCw className="w-4 h-4 mr-2" />
+                  Renew Session
+                </Button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Error Banner */}
         {error && (
           <div className="max-w-4xl mx-auto px-4 pb-2">
@@ -431,34 +452,36 @@ export function ImageGenInterface({
         )}
 
         {/* Input Panel */}
-        <div className="border-t bg-background/80 backdrop-blur-lg">
-          <div className="max-w-4xl mx-auto p-4">
-            <div className="flex items-start gap-3">
-              {/* Navigation Trigger */}
-              {hasGenerations && (
-                <Button
-                  variant="outline"
-                  size="icon"
-                  className="h-10 w-10 shrink-0"
-                  onClick={() => setIsNavOpen(true)}
-                  title="Browse generations (⌘K)"
-                >
-                  <Hash className="w-4 h-4" />
-                </Button>
-              )}
+        {!isReadOnly && (
+          <div className="border-t bg-background/80 backdrop-blur-lg">
+            <div className="max-w-4xl mx-auto p-4">
+              <div className="flex items-start gap-3">
+                {/* Navigation Trigger */}
+                {hasGenerations && (
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className="h-10 w-10 shrink-0"
+                    onClick={() => setIsNavOpen(true)}
+                    title="Browse generations (⌘K)"
+                  >
+                    <Hash className="w-4 h-4" />
+                  </Button>
+                )}
 
-              {/* Input */}
-              <div className="flex-1">
-                <ImageGenInput
-                  onGenerate={handleGenerate}
-                  isGenerating={isGenerating}
-                  creditsRemaining={creditsRemaining}
-                  disabled={creditsRemaining <= 0}
-                />
+                {/* Input */}
+                <div className="flex-1">
+                  <ImageGenInput
+                    onGenerate={handleGenerate}
+                    isGenerating={isGenerating}
+                    creditsRemaining={creditsRemaining}
+                    disabled={creditsRemaining <= 0}
+                  />
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Fullscreen Modal */}

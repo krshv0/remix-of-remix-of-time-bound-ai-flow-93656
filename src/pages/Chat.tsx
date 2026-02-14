@@ -80,8 +80,31 @@ export default function Chat() {
             .maybeSingle();
 
           if (expiredData) {
+            // Load expired session in read-only mode
             setExpiredSession(expiredData);
-            setShowRenewalDialog(true);
+            setActiveSession(expiredData);
+
+            // Load config for stats display
+            const { data: config } = await (supabase as any)
+              .from('session_config')
+              .select('token_limit_per_hour, image_credits_per_hour, video_credits_per_hour')
+              .eq('plan_id', expiredData.plan_id)
+              .eq('model_name', expiredData.model_name)
+              .maybeSingle();
+
+            if (config) {
+              setTokenStats({
+                used: expiredData.tokens_used || 0,
+                limit: config.token_limit_per_hour,
+              });
+              setGenerationStats({
+                imagesUsed: expiredData.images_generated || 0,
+                imagesLimit: config.image_credits_per_hour || 0,
+                videosUsed: 0,
+                videosLimit: config.video_credits_per_hour || 0,
+              });
+            }
+            setTimeRemaining("Expired");
             return;
           }
         }
@@ -156,7 +179,7 @@ export default function Chat() {
 
   // Timer effect
   useEffect(() => {
-    if (!activeSession) return;
+    if (!activeSession || activeSession.status === 'expired') return;
 
     const updateTimer = () => {
       const now = Date.now();
@@ -208,26 +231,10 @@ export default function Chat() {
     await loadActiveSession(renewedSession.id, location.state?.conversationId);
   }, [loadActiveSession, location.state?.conversationId]);
 
-  if (loading || (!activeSession && !showRenewalDialog)) {
+  if (loading || !activeSession) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse">Loading...</div>
-      </div>
-    );
-  }
-
-  if (showRenewalDialog && expiredSession) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-background">
-        <SessionRenewalDialog
-          open={showRenewalDialog}
-          onClose={() => {
-            setShowRenewalDialog(false);
-            navigate('/dashboard');
-          }}
-          expiredSession={expiredSession}
-          onRenewed={handleSessionRenewed}
-        />
       </div>
     );
   }
@@ -239,6 +246,8 @@ export default function Chat() {
       </div>
     );
   }
+
+  const isExpired = activeSession.status === 'expired';
 
   return (
     <div className="h-screen flex flex-col bg-background overflow-hidden">
@@ -308,8 +317,19 @@ export default function Chat() {
             generationStats={generationStats}
             onTokenUpdate={(used, limit) => setTokenStats({ used, limit })}
             onGenerationUpdate={() => loadActiveSession(location.state?.sessionId, location.state?.conversationId)}
+            isReadOnly={isExpired}
+            onRenewSession={() => setShowRenewalDialog(true)}
             className="h-full"
           />
+          {/* Session Renewal Dialog */}
+          {showRenewalDialog && expiredSession && (
+            <SessionRenewalDialog
+              open={showRenewalDialog}
+              onClose={() => setShowRenewalDialog(false)}
+              expiredSession={expiredSession}
+              onRenewed={handleSessionRenewed}
+            />
+          )}
         </div>
 
         {/* Stats Sidebar - Collapsible */}
