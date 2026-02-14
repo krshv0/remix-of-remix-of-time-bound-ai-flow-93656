@@ -59,7 +59,7 @@ serve(async (req) => {
     const HUGGINGFACE_API_KEY = Deno.env.get('HUGGINGFACE_API_KEY');
     
     const imageResponse = await fetch(
-      'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
+      'https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5',
       {
         method: 'POST',
         headers: {

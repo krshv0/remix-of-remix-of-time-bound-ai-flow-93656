@@ -25,9 +25,9 @@ interface RequestBody {
 
 // Model endpoints mapping
 const MODEL_ENDPOINTS: Record<string, string> = {
-  'stable-diffusion-v1-5': 'https://api-inference.huggingface.co/models/runwayml/stable-diffusion-v1-5',
-  'stable-diffusion-xl': 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-xl-base-1.0',
-  'stable-diffusion-3': 'https://api-inference.huggingface.co/models/stabilityai/stable-diffusion-3-medium-diffusers',
+  'stable-diffusion-v1-5': 'https://router.huggingface.co/hf-inference/models/runwayml/stable-diffusion-v1-5',
+  'stable-diffusion-xl': 'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-xl-base-1.0',
+  'stable-diffusion-3': 'https://router.huggingface.co/hf-inference/models/stabilityai/stable-diffusion-3-medium-diffusers',
 };
 
 // Validate and sanitize parameters
@@ -90,27 +90,29 @@ serve(async (req) => {
       );
     }
 
-    // Fetch session with config
+    // Fetch session
     const { data: sessionData, error: sessionError } = await supabaseClient
       .from('user_sessions')
-      .select(`
-        *,
-        session_config (
-          image_credits_per_hour,
-          model_name
-        )
-      `)
+      .select('*')
       .eq('id', sessionId)
       .eq('user_id', user.id)
       .eq('status', 'active')
       .single();
 
     if (sessionError || !sessionData) {
+      console.error('Session query error:', sessionError?.message, 'sessionId:', sessionId, 'userId:', user.id);
       return new Response(
         JSON.stringify({ error: 'Invalid or expired session' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
+
+    // Fetch session config separately (no FK relationship)
+    const { data: configData } = await supabaseClient
+      .from('session_config')
+      .select('image_credits_per_hour, model_name')
+      .eq('plan_id', sessionData.plan_id)
+      .single();
 
     // Check session expiry
     const expiresAt = new Date(sessionData.expires_at).getTime();
@@ -129,7 +131,7 @@ serve(async (req) => {
 
     // Check credits
     const imagesGenerated = sessionData.images_generated || 0;
-    const imageLimit = sessionData.session_config?.image_credits_per_hour || 0;
+    const imageLimit = configData?.image_credits_per_hour || 0;
 
     if (imageLimit <= 0) {
       return new Response(
@@ -162,7 +164,7 @@ serve(async (req) => {
     }
 
     // Determine model endpoint
-    const modelName = sessionData.session_config?.model_name || 'stable-diffusion-v1-5';
+    const modelName = configData?.model_name || sessionData.model_name || 'stable-diffusion-v1-5';
     const modelEndpoint = MODEL_ENDPOINTS[modelName] || MODEL_ENDPOINTS['stable-diffusion-v1-5'];
 
     // Generate images
