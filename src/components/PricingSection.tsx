@@ -55,10 +55,31 @@ const pricingTiers = [
   },
 ];
 
+const videoPricingTiers = [
+  {
+    name: "Starter Video Pack",
+    videos: 1,
+    price: 30,
+    description: "Try AI video generation",
+  },
+  {
+    name: "Pro Video Pack",
+    videos: 3,
+    price: 50,
+    description: "Best value for creators",
+    popular: true,
+  },
+  {
+    name: "Unlimited Video",
+    videos: 10,
+    price: 150,
+    description: "For serious production",
+  },
+];
+
 export const PricingSection = () => {
   return (
     <section id="pricing" className="py-24 px-4 relative overflow-hidden">
-      {/* Gradient background effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-transparent via-white/5 to-transparent pointer-events-none" />
       
       <div className="container mx-auto relative">
@@ -71,17 +92,42 @@ export const PricingSection = () => {
           </p>
         </div>
         
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
+        {/* Chat Pricing */}
+        <h3 className="text-2xl font-semibold text-center mb-8">AI Chat Sessions</h3>
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto mb-20">
           {pricingTiers.map((tier, index) => (
             <div
               key={tier.name}
               className="animate-fade-up"
-              style={{
-                animationDelay: `${index * 0.1}s`,
-                animationFillMode: 'backwards'
-              }}
+              style={{ animationDelay: `${index * 0.1}s`, animationFillMode: 'backwards' }}
             >
               <PricingCard tier={tier} />
+            </div>
+          ))}
+        </div>
+
+        {/* Video Pricing */}
+        <h3 className="text-2xl font-semibold text-center mb-8">AI Video Generation</h3>
+        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
+          {videoPricingTiers.map((tier, index) => (
+            <div
+              key={tier.name}
+              className={`animate-fade-up border rounded-xl p-6 text-center space-y-4 transition-all ${
+                tier.popular
+                  ? 'border-white bg-white/5 shadow-xl scale-105'
+                  : 'border-white/20 bg-white/[0.02] hover:border-white/40'
+              }`}
+              style={{ animationDelay: `${(index + 3) * 0.1}s`, animationFillMode: 'backwards' }}
+            >
+              {tier.popular && (
+                <span className="px-3 py-1 text-xs font-medium rounded-full bg-white text-black">
+                  Best Value
+                </span>
+              )}
+              <h4 className="text-xl font-bold">{tier.name}</h4>
+              <p className="text-sm text-muted-foreground">{tier.description}</p>
+              <div className="text-4xl font-bold">₹{tier.price}</div>
+              <p className="text-sm text-muted-foreground">{tier.videos} video{tier.videos > 1 ? 's' : ''}</p>
             </div>
           ))}
         </div>
