@@ -63,11 +63,19 @@ export function GenerationBlockCard({
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const downloadImage = (image: GeneratedImage) => {
-    const link = document.createElement('a');
-    link.href = image.url;
-    link.download = `sd-${image.seed || Date.now()}.png`;
-    link.click();
+  const downloadImage = async (image: GeneratedImage) => {
+    try {
+      const response = await fetch(image.url);
+      const blob = await response.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `sd-${image.seed || Date.now()}.png`;
+      link.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      window.open(image.url, '_blank');
+    }
   };
 
   return (
