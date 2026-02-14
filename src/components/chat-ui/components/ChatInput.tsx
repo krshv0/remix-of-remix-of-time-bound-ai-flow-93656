@@ -7,6 +7,11 @@ import React, { useState, useRef, useCallback, useEffect, ChangeEvent, KeyboardE
 import { Send, Paperclip, X, StopCircle, Image, FileText, Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { FileAttachment } from '../types';
+import * as pdfjsLib from 'pdfjs-dist';
+import mammoth from 'mammoth';
+
+// Configure PDF.js worker
+pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 interface ChatInputProps {
   onSend: (message: string, files?: FileAttachment[]) => void;
@@ -91,31 +96,65 @@ export function ChatInput({
     }
   };
 
+  const extractPdfText = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+    let fullText = '';
+    for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+      const page = await pdf.getPage(pageNum);
+      const textContent = await page.getTextContent();
+      const pageText = textContent.items.map((item: any) => item.str).join(' ');
+      fullText += `\n--- Page ${pageNum} ---\n${pageText}\n`;
+    }
+    return fullText.trim() || '[PDF document appears to be empty or contains only images]';
+  };
+
+  const extractDocxText = async (file: File): Promise<string> => {
+    const arrayBuffer = await file.arrayBuffer();
+    const result = await mammoth.extractRawText({ arrayBuffer });
+    return result.value.trim() || '[Word document appears to be empty]';
+  };
+
   const processFile = async (file: File): Promise<FileAttachment | null> => {
     if (file.size > maxFileSize) {
       console.error(`File ${file.name} exceeds size limit`);
       return null;
     }
 
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        resolve({
-          id: generateId(),
-          name: file.name,
-          type: file.type,
-          size: file.size,
-          content: e.target?.result as string,
+    try {
+      let content: string;
+
+      if (file.type === 'application/pdf') {
+        content = await extractPdfText(file);
+      } else if (file.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+        content = await extractDocxText(file);
+      } else if (file.type.startsWith('text/') || file.type === 'application/json') {
+        content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsText(file);
         });
-      };
-      reader.onerror = () => resolve(null);
-      
-      if (file.type.startsWith('text/') || file.type === 'application/json') {
-        reader.readAsText(file);
       } else {
-        reader.readAsDataURL(file);
+        content = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target?.result as string);
+          reader.onerror = () => reject(new Error('Failed to read file'));
+          reader.readAsDataURL(file);
+        });
       }
-    });
+
+      return {
+        id: generateId(),
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        content,
+      };
+    } catch (err) {
+      console.error(`Failed to process file ${file.name}:`, err);
+      return null;
+    }
   };
 
   const handleFileSelect = async (e: ChangeEvent<HTMLInputElement>) => {
@@ -227,7 +266,7 @@ export function ChatInput({
           multiple
           className="hidden"
           onChange={handleFileSelect}
-          accept="image/*,text/*,application/pdf,application/json,.md,.csv"
+          accept="image/*,text/*,application/pdf,application/json,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/msword,.md,.csv,.pdf,.doc,.docx"
         />
         <button
           onClick={() => fileInputRef.current?.click()}
