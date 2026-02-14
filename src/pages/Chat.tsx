@@ -6,6 +6,7 @@ import { LogOut, Sparkles, Moon, Sun, ChevronLeft, ChevronRight, Clock } from "l
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { ModernChatInterface, useTheme } from "@/components/chat-ui";
+import { SessionRenewalDialog } from "@/components/SessionRenewalDialog";
 import { cn } from "@/lib/utils";
 
 export default function Chat() {
@@ -19,6 +20,8 @@ export default function Chat() {
   const [loading, setLoading] = useState(true);
   const [statsSidebarOpen, setStatsSidebarOpen] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [expiredSession, setExpiredSession] = useState<any>(null);
+  const [showRenewalDialog, setShowRenewalDialog] = useState(false);
   const [generationStats, setGenerationStats] = useState<{
     imagesUsed: number;
     imagesLimit: number;
@@ -66,6 +69,23 @@ export default function Chat() {
       }
 
       if (!data) {
+        // If a specific session ID was requested, check if it's expired
+        if (sessionId) {
+          const { data: expiredData } = await (supabase as any)
+            .from('user_sessions')
+            .select('*')
+            .eq('id', sessionId)
+            .eq('user_id', user?.id)
+            .eq('status', 'expired')
+            .maybeSingle();
+
+          if (expiredData) {
+            setExpiredSession(expiredData);
+            setShowRenewalDialog(true);
+            return;
+          }
+        }
+
         toast({
           title: "No Active Session",
           description: "Please purchase a session from the dashboard.",
@@ -182,7 +202,37 @@ export default function Chat() {
     }
   };
 
-  if (loading || !activeSession) {
+  const handleSessionRenewed = useCallback(async (renewedSession: any) => {
+    setShowRenewalDialog(false);
+    setExpiredSession(null);
+    await loadActiveSession(renewedSession.id, location.state?.conversationId);
+  }, [loadActiveSession, location.state?.conversationId]);
+
+  if (loading || (!activeSession && !showRenewalDialog)) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  if (showRenewalDialog && expiredSession) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <SessionRenewalDialog
+          open={showRenewalDialog}
+          onClose={() => {
+            setShowRenewalDialog(false);
+            navigate('/dashboard');
+          }}
+          expiredSession={expiredSession}
+          onRenewed={handleSessionRenewed}
+        />
+      </div>
+    );
+  }
+
+  if (!activeSession) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse">Loading...</div>

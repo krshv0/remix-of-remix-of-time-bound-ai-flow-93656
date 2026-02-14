@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { useTheme } from "@/components/chat-ui";
 import { ImageGenInterface } from "@/components/image-gen";
+import { SessionRenewalDialog } from "@/components/SessionRenewalDialog";
 import { cn } from "@/lib/utils";
 
 export default function ImageGenPage() {
@@ -25,6 +26,8 @@ export default function ImageGenPage() {
   const [loading, setLoading] = useState(true);
   const [statsSidebarOpen, setStatsSidebarOpen] = useState(true);
   const [timeRemaining, setTimeRemaining] = useState<string>("");
+  const [expiredSession, setExpiredSession] = useState<any>(null);
+  const [showRenewalDialog, setShowRenewalDialog] = useState(false);
   const [generationStats, setGenerationStats] = useState<{
     imagesUsed: number;
     imagesLimit: number;
@@ -71,6 +74,24 @@ export default function ImageGenPage() {
       }
 
       if (!data) {
+        // If a specific session ID was requested, check if it's expired
+        if (sessionId) {
+          const { data: expiredData } = await (supabase as any)
+            .from('user_sessions')
+            .select('*')
+            .eq('id', sessionId)
+            .eq('user_id', user?.id)
+            .eq('status', 'expired')
+            .eq('session_type', 'image_generation')
+            .maybeSingle();
+
+          if (expiredData) {
+            setExpiredSession(expiredData);
+            setShowRenewalDialog(true);
+            return;
+          }
+        }
+
         toast({
           title: "No Active Session",
           description: "Please purchase an image generation session from the dashboard.",
@@ -85,7 +106,7 @@ export default function ImageGenPage() {
         .from('session_config')
         .select('image_credits_per_hour')
         .eq('plan_id', data.plan_id)
-        .single();
+        .maybeSingle();
 
       const sessionWithConfig = {
         ...data,
@@ -206,7 +227,39 @@ export default function ImageGenPage() {
     }
   };
 
-  if (loading || !activeSession) {
+  const handleSessionRenewed = useCallback(async (renewedSession: any) => {
+    setShowRenewalDialog(false);
+    setExpiredSession(null);
+    // Reload the now-active session
+    await loadActiveSession(renewedSession.id);
+  }, [loadActiveSession]);
+
+  if (loading || (!activeSession && !showRenewalDialog)) {
+    return (
+      <div className="h-screen flex items-center justify-center">
+        <div className="animate-pulse">Loading...</div>
+      </div>
+    );
+  }
+
+  // Show renewal dialog if session is expired
+  if (showRenewalDialog && expiredSession) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-background">
+        <SessionRenewalDialog
+          open={showRenewalDialog}
+          onClose={() => {
+            setShowRenewalDialog(false);
+            navigate('/dashboard');
+          }}
+          expiredSession={expiredSession}
+          onRenewed={handleSessionRenewed}
+        />
+      </div>
+    );
+  }
+
+  if (!activeSession) {
     return (
       <div className="h-screen flex items-center justify-center">
         <div className="animate-pulse">Loading...</div>
