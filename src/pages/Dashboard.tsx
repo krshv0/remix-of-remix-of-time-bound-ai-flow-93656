@@ -3,13 +3,23 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, Clock, Zap, Film, Video } from "lucide-react";
+import { LogOut, Sparkles, Moon, Sun, MessageSquare, ChevronRight, Image as ImageIcon, Clock, Zap, Film, Video, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { User } from "@supabase/supabase-js";
 import { PlanSelector } from "@/components/PlanSelector";
 import { useTheme } from "@/components/chat-ui";
 import { format } from "date-fns";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Conversation {
   id: string;
@@ -32,7 +42,7 @@ export default function Dashboard() {
   const [activeSessions, setActiveSessions] = useState<any[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [deletingConversationId, setDeletingConversationId] = useState<string | null>(null);
   const loadActiveSessions = useCallback(async () => {
     try {
       const { data, error } = await (supabase as any)
@@ -106,6 +116,33 @@ export default function Dashboard() {
       navigate('/video-gen', { state: { sessionId: session.id } });
     } else {
       navigate('/chat', { state: { sessionId: session.id } });
+    }
+  };
+
+  const handleDeleteConversation = async () => {
+    if (!deletingConversationId) return;
+    try {
+      // Delete messages first (foreign key constraint)
+      await (supabase as any)
+        .from('chat_messages')
+        .delete()
+        .eq('conversation_id', deletingConversationId);
+
+      const { error } = await (supabase as any)
+        .from('conversations')
+        .delete()
+        .eq('id', deletingConversationId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      setConversations(prev => prev.filter(c => c.id !== deletingConversationId));
+      toast({ title: "Conversation deleted" });
+    } catch (error: any) {
+      console.error('Error deleting conversation:', error);
+      toast({ title: "Error", description: "Failed to delete conversation", variant: "destructive" });
+    } finally {
+      setDeletingConversationId(null);
     }
   };
 
@@ -317,7 +354,19 @@ export default function Dashboard() {
                             )}
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0" />
+                          <div className="flex items-center gap-1 flex-shrink-0">
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setDeletingConversationId(conversation.id);
+                              }}
+                              className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
+                              aria-label="Delete conversation"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                            <ChevronRight className="w-4 h-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
+                          </div>
                       </button>
                     ))}
                   </div>
@@ -327,6 +376,24 @@ export default function Dashboard() {
           </Card>
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deletingConversationId} onOpenChange={(open) => !open && setDeletingConversationId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete conversation?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this conversation and all its messages. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConversation} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
